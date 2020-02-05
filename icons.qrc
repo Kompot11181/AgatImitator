@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>List.ico</file>
+        <file>Agat_big_grey.png</file>
+        <file>jk.png</file>
+    </qresource>
+</RCC>
