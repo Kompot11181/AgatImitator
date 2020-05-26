@@ -171,7 +171,7 @@ void MainWindow::serialReceive(QByteArray pck)
         if (koral_in_list == -1)
         {
             logOutStr += QString(" - <font color = ""green"">[%1: ??? ] <b>-</b></font>").arg(QString::number(dst));
-            ui->teInputData->append(logOutStr);
+            if(ui->groupBox->isChecked()) ui->teInputData->append(logOutStr);
             return;
         }
         // проверка на команду Кораллу
@@ -181,7 +181,7 @@ void MainWindow::serialReceive(QByteArray pck)
                     .arg(QString::number(dst))
                     .arg(koral_list.at(koral_in_list)->getName())
                     .arg(QString::number(koralpack.getCmd()));
-            ui->teInputData->append(logOutStr);
+            if(ui->groupBox->isChecked()) ui->teInputData->append(logOutStr);
             return;
         }
 

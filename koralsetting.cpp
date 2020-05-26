@@ -38,7 +38,7 @@ cKoralSetting::cKoralSetting(QWidget *parent) : QWidget(parent)
     spinBoxAddress = new QSpinBox(backwidget);
     spinBoxAddress->setFixedSize(QSize(40, 20));
     spinBoxAddress->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
-    spinBoxAddress->setMaximum(31);
+    spinBoxAddress->setMaximum(63);
     horLayout->addWidget(spinBoxAddress);
 
     lValue1 = new QLabel(backwidget);
