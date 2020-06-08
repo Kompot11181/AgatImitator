@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 
 #define PROGRAM_NAME "AGAT-Imitator"
-#define VERSION_NAME "v.0.9"
+#define VERSION_NAME "v.0.92"
 #define PROG_DATE __DATE__
 #define PROG_TIME  __TIME__
 
@@ -200,7 +200,8 @@ void MainWindow::serialReceive(QByteArray pck)
         koralpack.setData(1, koral_list.at(koral_in_list)->getValue2());
         bool ok;
         // проверить, вдруг обращение идёт к связке датчиков Коралл+Вибро
-        if(koral_list.at(koral_in_list)->getType() != KorallPlusType) {
+        if((koral_list.at(koral_in_list)->getType() != KorallPlusType) &&
+           (koral_list.at(koral_in_list)->getType() != BKS01Type)) {
             // сформировать пакет для датчиков
             koralpack.setData(2, 0.0);
             ok = koralpack.makeAnswer(koral_list.at(koral_in_list)->getType());
@@ -208,20 +209,51 @@ void MainWindow::serialReceive(QByteArray pck)
         else
         {
             // для Коралл+вибро взять и изменить значения для виртуальных датчиков
-            cKoralSetting *k2, *k3;
-            if(koral_list.at(koral_in_list+1)->getType() == PlusMassType) {
-                k2 = koral_list.at(koral_in_list+1);
-                k2->step();
-                koralpack.setData(2,k2->getValue1());
-                koralpack.setData(3,k2->getValue2());
-                if(koral_list.at(koral_in_list+2)->getType() == PlusVibroType) {
-                    k3 = koral_list.at(koral_in_list+2);
-                    k3->step();
-                    koralpack.setData(4,k3->getValue1());
-                    koralpack.setData(5,k3->getValue2());
+            if (koral_list.at(koral_in_list)->getType() == KorallPlusType) {
+                cKoralSetting *k2, *k3;
+                if(koral_list.at(koral_in_list+1)->getType() == PlusMassType) {
+                    k2 = koral_list.at(koral_in_list+1);
+                    k2->step();
+                    koralpack.setData(2,k2->getValue1());
+                    koralpack.setData(3,k2->getValue2());
+                    if(koral_list.at(koral_in_list+2)->getType() == PlusVibroType) {
+                        k3 = koral_list.at(koral_in_list+2);
+                        k3->step();
+                        koralpack.setData(4,k3->getValue1());
+                        koralpack.setData(5,k3->getValue2());
+                    }
                 }
+                ok = koralpack.makeAnswer(KorallPlusType);
             }
-            ok = koralpack.makeAnswer(KorallPlusType);
+            // для БКС взять и изменить значения для виртуальных датчиков
+            if (koral_list.at(koral_in_list)->getType() == BKS01Type) {
+                cKoralSetting *k2, *k3, *k4, *k5;
+                if(koral_list.at(koral_in_list+1)->getType() == BKS23Type) {
+                    k2 = koral_list.at(koral_in_list+1);
+                    k2->step();
+                    koralpack.setData(2,k2->getValue1());
+                    koralpack.setData(3,k2->getValue2());
+                    if(koral_list.at(koral_in_list+2)->getType() == BKS45Type) {
+                        k3 = koral_list.at(koral_in_list+2);
+                        k3->step();
+                        koralpack.setData(4,k3->getValue1());
+                        koralpack.setData(5,k3->getValue2());
+                        if(koral_list.at(koral_in_list+3)->getType() == BKS67Type) {
+                            k4 = koral_list.at(koral_in_list+3);
+                            k4->step();
+                            koralpack.setData(6,k4->getValue1());
+                            koralpack.setData(7,k4->getValue2());
+                            if(koral_list.at(koral_in_list+4)->getType() == BKS89Type) {
+                                k5 = koral_list.at(koral_in_list+4);
+                                k5->step();
+                                koralpack.setData(8,k5->getValue1());
+                                koralpack.setData(9,k5->getValue2());
+                            }
+                        }
+                    }
+                }
+                ok = koralpack.makeAnswer(BKS01Type);
+            }
         }
         // проверка на корректно сформированный пакет ответа
         if(!ok)
@@ -352,12 +384,31 @@ void MainWindow::on_pbPlus_clicked()
         case KorallPlusType:
             koral_list.append(new cKoralSetting(koral_list.length()+1, PlusMassType, koral_list.at(koral_list.length()-1)->getAddr()));
             koral_list.at(koral_list.length()-1)->setFixedType();
+            koral_list.at(koral_list.length()-1)->setFixedState();
             ui->vLayout->addWidget(koral_list.last());
             koral_list.append(new cKoralSetting(koral_list.length()+1, PlusVibroType, koral_list.at(koral_list.length()-1)->getAddr()));
             koral_list.at(koral_list.length()-1)->setFixedType();
+            koral_list.at(koral_list.length()-1)->setFixedState();
             break;
         case PlusVibroType:
-            koral_list.append(new cKoralSetting(koral_list.length()+1, KorallType, koral_list.at(koral_list.length()-1)->getAddr() + 1)); break;
+            koral_list.append(new cKoralSetting(koral_list.length()+1, KorallPlusType, koral_list.at(koral_list.length()-1)->getAddr() + 1)); break;
+        case BKS01Type:
+            koral_list.append(new cKoralSetting(koral_list.length()+1, BKS23Type, koral_list.at(koral_list.length()-1)->getAddr()));
+            koral_list.at(koral_list.length()-1)->setFixedType();
+            ui->vLayout->addWidget(koral_list.last());
+            koral_list.append(new cKoralSetting(koral_list.length()+1, BKS45Type, koral_list.at(koral_list.length()-1)->getAddr()));
+            koral_list.at(koral_list.length()-1)->setFixedType();
+            ui->vLayout->addWidget(koral_list.last());
+            koral_list.append(new cKoralSetting(koral_list.length()+1, BKS67Type, koral_list.at(koral_list.length()-1)->getAddr()));
+            koral_list.at(koral_list.length()-1)->setFixedType();
+            koral_list.at(koral_list.length()-1)->setFixedState();
+            ui->vLayout->addWidget(koral_list.last());
+            koral_list.append(new cKoralSetting(koral_list.length()+1, BKS89Type, koral_list.at(koral_list.length()-1)->getAddr()));
+            koral_list.at(koral_list.length()-1)->setFixedType();
+            koral_list.at(koral_list.length()-1)->setFixedState();
+            break;
+        case BKS89Type:
+            koral_list.append(new cKoralSetting(koral_list.length()+1, BKS01Type, koral_list.at(koral_list.length()-1)->getAddr() + 1)); break;
         default:
             koral_list.append(new cKoralSetting(koral_list.length()+1, koral_list.at(koral_list.length()-1)->getType(), koral_list.at(koral_list.length()-1)->getAddr() + 1));
         }
@@ -367,8 +418,13 @@ void MainWindow::on_pbPlus_clicked()
 void MainWindow::on_pbMinus_clicked()
 {
     if(koral_list.length() > 1)
-    {
+    {   // !!! здесь сквозной CASE. Выполнение операций последовательно начиная с совпадения!!!
         switch(koral_list.last()->getType()){
+        case BKS89Type:
+            delete koral_list.last();
+            koral_list.pop_back();
+            delete koral_list.last();
+            koral_list.pop_back();
         case PlusVibroType:
             delete koral_list.last();
             koral_list.pop_back();
@@ -471,12 +527,16 @@ void MainWindow::on_pbSave_clicked()
         settings.beginGroup("Sensor" + QString::number(i));
         settings.setValue("Type", static_cast<int>(sensor->getType()));
         settings.setValue("Address", sensor->getAddr());
+        settings.setValue("AddressName", sensor->getAddrName().replace("³", "^3").replace("²", "^2"));
         settings.setValue("Value1", QString::number(sensor->getValue1(),'f', 3));
+        settings.setValue("Value1Name", sensor->getValue1Name().replace("³", "^3").replace("²", "^2"));
         settings.setValue("Value2", QString::number(sensor->getValue2(),'f', 3));
+        settings.setValue("Value2Name", sensor->getValue2Name().replace("³", "^3").replace("²", "^2"));
         settings.setValue("Increment1", QString::number(sensor->getInc1(),'f', 3));
         settings.setValue("Increment2", QString::number(sensor->getInc2(),'f', 3));
         settings.setValue("RandomFlag1", sensor->getRnd1());
         settings.setValue("RandomFlag2", sensor->getRnd2());
+        settings.setValue("FlagsName", sensor->getFlagsName().replace("³", "^3").replace("²", "^2"));
         settings.setValue("Status", sensor->getStat());
         settings.setValue("Error", sensor->getErr());
         settings.endGroup();
@@ -496,6 +556,9 @@ void MainWindow::on_pbLoad_clicked()
     ui->teInputData->document()->setMaximumBlockCount(settings.value("General/MaxLogLines").toInt());
     ui->leOutputData->setText(settings.value("General/OutputData").toString());
     ui->leOutputData->setPlaceholderText(settings.value("General/OutputMess").toString());
+// удалить предыдущие датчики
+    while(koral_list.length() > 1)
+        MainWindow::on_pbMinus_clicked();
 // загрузка настроек для каждого из датчиков
     quint8 i = 0;
     while(settings.contains("Sensor" + QString::number(++i) + "/Type"))
@@ -506,18 +569,21 @@ void MainWindow::on_pbLoad_clicked()
             MainWindow::on_pbPlus_clicked();
         koral_list.at(i-1)->setType(settings.value("Type").toInt());
         koral_list.at(i-1)->setAddr(settings.value("Address").toInt());
+        koral_list.at(i-1)->setAddrName(settings.value("AddressName", "Адрес").toString().replace("^3", "³").replace("^2", "²"));
         koral_list.at(i-1)->setValue1(settings.value("Value1").toFloat());
+        koral_list.at(i-1)->setValue1Name(settings.value("Value1Name", "Параметр 1").toString().replace("^3", "³").replace("^2", "²"));
         koral_list.at(i-1)->setValue2(settings.value("Value2").toFloat());
+        koral_list.at(i-1)->setValue2Name(settings.value("Value2Name", "Параметр 2").toString().replace("^3", "³").replace("^2", "²"));
         koral_list.at(i-1)->setInc1(settings.value("Increment1").toFloat());
         koral_list.at(i-1)->setInc2(settings.value("Increment2").toFloat());
         koral_list.at(i-1)->setRnd1(settings.value("RandomFlag1", true).toBool());
         koral_list.at(i-1)->setRnd2(settings.value("RandomFlag2", true).toBool());
+        koral_list.at(i-1)->setFlagsName(settings.value("FlagsName", "Состояние:").toString().replace("^3", "³").replace("^2", "²"));
         koral_list.at(i-1)->setStat(settings.value("Status").toInt());
         koral_list.at(i-1)->setErr(settings.value("Error").toInt());
         settings.endGroup();
     }
-    // если датчиков больше, чем в файле настроек, то удалить лишние
-    while(koral_list.length() >= i)
-        MainWindow::on_pbMinus_clicked();
-    ui->statusBar->showMessage("Загрузка установок прошла успешно", 2000);
+    str = "Загрузка установок из файла " + str + " прошла успешно";
+    if(ui->groupBox->isChecked()) ui->teInputData->append(str);
+    ui->statusBar->showMessage(str, 5000);
 }

@@ -81,8 +81,8 @@ public:
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QStringLiteral("MainWindow"));
-        MainWindow->resize(920, 550);
-        MainWindow->setMinimumSize(QSize(920, 330));
+        MainWindow->resize(930, 550);
+        MainWindow->setMinimumSize(QSize(930, 330));
         QIcon icon;
         icon.addFile(QStringLiteral(":/List.ico"), QSize(), QIcon::Normal, QIcon::Off);
         MainWindow->setWindowIcon(icon);
@@ -202,7 +202,7 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QStringLiteral("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 864, 189));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 874, 189));
         verticalLayoutWidget_3 = new QWidget(scrollAreaWidgetContents);
         verticalLayoutWidget_3->setObjectName(QStringLiteral("verticalLayoutWidget_3"));
         verticalLayoutWidget_3->setGeometry(QRect(370, 70, 61, 40));
@@ -387,7 +387,7 @@ public:
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QStringLiteral("menuBar"));
         menuBar->setEnabled(false);
-        menuBar->setGeometry(QRect(0, 0, 920, 21));
+        menuBar->setGeometry(QRect(0, 0, 930, 21));
         menuBar->setNativeMenuBar(false);
         MainWindow->setMenuBar(menuBar);
         statusBar = new QStatusBar(MainWindow);

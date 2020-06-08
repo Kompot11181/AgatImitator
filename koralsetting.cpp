@@ -13,11 +13,23 @@ cKoralSetting::cKoralSetting(QWidget *parent) : QWidget(parent)
 
     horLayout = new QHBoxLayout(backwidget);
     horLayout->setContentsMargins(0, 0, 0, 0);
-    horLayout->setSpacing(6);
+    horLayout->setSpacing(5);
     lNum = new QLabel(this);
     lNum->setFixedSize(QSize(15, 20));
     lNum->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     horLayout->addWidget(lNum);
+
+    leAddress = new QLineEdit(backwidget);
+    leAddress->setMaximumSize(QSize(50, 20));
+    leAddress->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+    leAddress->setFrame(false);
+    horLayout->addWidget(leAddress);
+
+    spinBoxAddress = new QSpinBox(backwidget);
+    spinBoxAddress->setFixedSize(QSize(40, 20));
+    spinBoxAddress->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
+    spinBoxAddress->setMaximum(63);
+    horLayout->addWidget(spinBoxAddress);
 
     comboBoxType = new QComboBox(backwidget);
     comboBoxType->setFixedSize(80, 20);
@@ -27,24 +39,18 @@ cKoralSetting::cKoralSetting(QWidget *parent) : QWidget(parent)
     QStandardItemModel* model = (QStandardItemModel*) comboBoxType->model();
     model->item(tSensorType::PlusMassType)->setEnabled(false);
     model->item(tSensorType::PlusVibroType)->setEnabled(false);
+    model->item(tSensorType::BKS23Type)->setEnabled(false);
+    model->item(tSensorType::BKS45Type)->setEnabled(false);
+    model->item(tSensorType::BKS67Type)->setEnabled(false);
+    model->item(tSensorType::BKS89Type)->setEnabled(false);
     comboBoxType->setCurrentIndex(tSensorType::KorallType);
     horLayout->addWidget(comboBoxType);
 
-    lAddress = new QLabel(backwidget);
-    lAddress->setMaximumSize(QSize(50, 20));
-    lAddress->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
-    horLayout->addWidget(lAddress);
-
-    spinBoxAddress = new QSpinBox(backwidget);
-    spinBoxAddress->setFixedSize(QSize(40, 20));
-    spinBoxAddress->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
-    spinBoxAddress->setMaximum(63);
-    horLayout->addWidget(spinBoxAddress);
-
-    lValue1 = new QLabel(backwidget);
-    lValue1->setMinimumSize(QSize(80, 20));
-    lValue1->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
-    horLayout->addWidget(lValue1);
+    leValue1 = new QLineEdit(backwidget);
+    leValue1->setMinimumSize(QSize(80, 20));
+    leValue1->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
+    leValue1->setFrame(false);
+    horLayout->addWidget(leValue1);
 
     dSpinBoxValue1 = new QDoubleSpinBox(backwidget);
     dSpinBoxValue1->setFixedSize(QSize(70, 20));
@@ -71,10 +77,11 @@ cKoralSetting::cKoralSetting(QWidget *parent) : QWidget(parent)
     checkBoxRnd1->setText("");
     horLayout->addWidget(checkBoxRnd1);
 
-    lValue2 = new QLabel(backwidget);
-    lValue2->setMinimumSize(QSize(60, 20));
-    lValue2->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
-    horLayout->addWidget(lValue2);
+    leValue2 = new QLineEdit(backwidget);
+    leValue2->setMinimumSize(QSize(60, 20));
+    leValue2->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
+    leValue2->setFrame(false);
+    horLayout->addWidget(leValue2);
 
     dSpinBoxValue2 = new QDoubleSpinBox(backwidget);
     dSpinBoxValue2->setFixedSize(QSize(70, 20));
@@ -100,13 +107,14 @@ cKoralSetting::cKoralSetting(QWidget *parent) : QWidget(parent)
     checkBoxRnd2->setText("");
     horLayout->addWidget(checkBoxRnd2);
 
-    horSpacer = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    horSpacer = new QSpacerItem(10, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
     horLayout->addItem(horSpacer);
 
-    lFlags = new QLabel(backwidget);
-    lFlags->setMinimumSize(QSize(70, 20));
-    lFlags->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
-    horLayout->addWidget(lFlags);
+    leFlags = new QLineEdit(backwidget);
+    leFlags->setFixedSize(QSize(70, 20));
+    leFlags->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
+    leFlags->setFrame(false);
+    horLayout->addWidget(leFlags);
 
     spinBoxErr = new QSpinBox(backwidget);
     spinBoxErr->setFixedSize(QSize(40, 20));
@@ -122,10 +130,10 @@ cKoralSetting::cKoralSetting(QWidget *parent) : QWidget(parent)
     verLayout->addWidget(backwidget);
 
     lNum->setText(tr("1:"));
-    lAddress->setText(tr("Адрес"));
-    lValue1->setText(tr("Параметр 1"));
-    lValue2->setText(tr("Параметр 2"));
-    lFlags->setText(tr("Состояние:"));
+    leAddress->setText(tr("Адрес"));
+    leValue1->setText(tr("Параметр 1"));
+    leValue2->setText(tr("Параметр 2"));
+    leFlags->setText(tr("Состояние:"));
 
     comboBoxType->setStatusTip("Тип датчика. Для 'Коралла-8' с поключённым 'Вибро-1' использовать тип 'Коралл+', '+ массметр', '+ Вибро' с одинаковыми адресами" );
     spinBoxAddress->setStatusTip("Адрес датчика (0..31)");

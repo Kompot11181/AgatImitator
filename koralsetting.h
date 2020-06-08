@@ -14,27 +14,36 @@ public:
     {
         lNum->setText(QString::number(num) + ":");
         setType(type); setAddr(adr);
+        QPalette pal = backwidget->palette();
         // если сенсор чётный. Для равен массметра наоборот
-        if((  (num%2) && (type != PlusMassType))
-          ||(!(num%2) && (type == PlusMassType))) {
-            QPalette pal = backwidget->palette();
+        if((  (num%2) && ((type != PlusMassType) && (type != BKS23Type) && (type != BKS67Type))) ||
+           ( !(num%2) && ((type == PlusMassType) || (type == BKS23Type) || (type == BKS67Type)))) {
             // изменить цвет, сделать его на 5% ярче
             pal.setColor(QPalette::Window, QColor(pal.color(QPalette::Window).lighter(105)));
-            backwidget->setPalette(pal);
-            backwidget->setAutoFillBackground(true);    // автоматически залить фон цветом
+            pal.setColor(QPalette::Base, QColor(pal.color(QPalette::Window)));
         }
         else
         {
-                    QPalette pal = backwidget->palette();
+
                     // изменить цвет, сделать его на 5% темнее
                     pal.setColor(QPalette::Window, QColor(pal.color(QPalette::Window).darker(105)));
-                    backwidget->setPalette(pal);
-                    backwidget->setAutoFillBackground(true);    // автоматически залить фон цветом
-                }
+                    pal.setColor(QPalette::Base, QColor(pal.color(QPalette::Window)));
+        }
+        backwidget->setPalette(pal);
+        leAddress->setPalette(pal);
+        leValue1->setPalette(pal);
+        leValue2->setPalette(pal);
+        leFlags->setPalette(pal);
+        backwidget->setAutoFillBackground(true);    // автоматически залить фон цветом
     }
+
     quint8 getAddr() const {return _addr;}
     tSensorType getType() const {return _type;}
     QString getName() const {return SensorsName[_type];}
+    QString getAddrName() const {return leAddress->text();}
+    QString getValue1Name() const {return leValue1->text();}
+    QString getValue2Name() const {return leValue2->text();}
+    QString getFlagsName() const {return leFlags->text();}
     float getValue1() const {return _value1;}
     float getValue2() const {return _value2;}
     float getInc1() const {return _inc1;}
@@ -69,10 +78,10 @@ private:
     QVBoxLayout * verLayout;
     QHBoxLayout * horLayout;
     QLabel * lNum;
-    QLabel * lAddress;
-    QLabel * lValue1;
-    QLabel * lValue2;
-    QLabel * lFlags;
+    QLineEdit * leAddress;
+    QLineEdit * leValue1;
+    QLineEdit * leValue2;
+    QLineEdit * leFlags;
     QSpacerItem * horSpacer;
 
     QComboBox * comboBoxType;
@@ -95,11 +104,16 @@ private:
         tr("КРУ-1"),
         tr("Коралл+"),
         tr("+массметр"),
-        tr("+Вибро")
+        tr("+Вибро"),
+        tr(" БКС 01+"),
+        tr("+БКС 23+"),
+        tr("+БКС 45+"),
+        tr("+БКС 67+"),
+        tr("+БКС 89 ")
     };
 // максимальное значение байта ошибки и байта статуса
     const quint8 errStatMaxValues[SensorsCount][2] =
-    {{6, 7}, {7, 1}, {0, 0x7F}, {8, 7}, {0, 0}, {0, 0}};
+    {{6, 7}, {7, 1}, {0, 0x7F}, {8, 7}, {0, 0}, {0, 0}, {0xFF, 0xFF}, {0xF, 0xF}, {0xF, 0xF}, {0, 0}, {0, 0}};
 // подсказки
     const QString SensorHint[SensorsCount][4] = {
 //Коралл
@@ -183,15 +197,38 @@ private:
         {tr("Значение первого параметра (измеренное значение плотности)"),
          tr("Значение второго параметра (измеренное значение температуры)"),
          tr(""), tr("")
-        }          //+Вибро
+        },          //+Вибро
+        {tr("Значение 0-го параметра"),
+         tr("Значение 1-го параметра"),
+         tr("Ошибка БКС"), tr("Ошибка первого/второго канала")
+        },          // БКС 01+
+        {tr("Значение 2-го параметра"),
+         tr("Значение 3-го параметра"),
+         tr("Ошибка третьего канала"), tr("Ошибка четвертого канала")
+        },          // +БКС 23
+        {tr("Значение 4-го параметра"),
+         tr("Значение 5-го параметра"),
+         tr("Ошибка пятого канала"), tr("Ошибка шестого канала")
+        },          // +БКС 45
+        {tr("Значение 6-го параметра"),
+         tr("Значение 7-го параметра"),
+         tr(""), tr("")
+        },          // +БКС 67
+        {tr("Значение 8-го параметра"),
+         tr("Значение 9-го параметра"),
+         tr(""), tr("")
+        }          // +БКС 89
     };
+
 
 signals:
 
 public slots:
     void setAddr(int adr) {_addr = static_cast<quint8>(adr); spinBoxAddress->setValue(_addr); spinBoxAddress->setToolTip("0x" + QString::number(_addr, 16).toUpper());}
     void setType(int type);
-    void setFixedType () {comboBoxType->setEnabled(false); spinBoxAddress->setEnabled(false); spinBoxErr->setVisible(false); spinBoxStat->setVisible(false); lFlags->setVisible(false);}
+    void setFixedType () {comboBoxType->setEnabled(false); spinBoxAddress->setEnabled(false);}
+    void setFixedState() {spinBoxErr->setVisible(false); spinBoxStat->setVisible(false); leFlags->setVisible(false);
+        horLayout->addItem(new QSpacerItem(spinBoxErr->width() + spinBoxStat->width() + leFlags->width() + 3*horLayout->spacing(), 20, QSizePolicy::Fixed, QSizePolicy::Minimum));}
     void setErr(int er) {spinBoxErr->setValue(er); _err = static_cast<quint8>(spinBoxErr->value());}
     void setStat(int st) {spinBoxStat->setValue(st); _stat = static_cast<quint8>(spinBoxStat->value());}
     void setRnd1(bool rnd) {_rnd1 = rnd; checkBoxRnd1->setChecked(_rnd1);}
@@ -200,6 +237,10 @@ public slots:
     void setValue2(double v) {_value2 = static_cast<float>(v); dSpinBoxValue2->setValue(static_cast<double>(_value2)); koralChannel ch; ch.fdata = _value2; dSpinBoxValue2->setToolTip("0x" + QString::number(ch.idata & 0xFFFFFFFF, 16).toUpper());}
     void setInc1(double i) {_inc1 = static_cast<float>(i); dSpinBoxInc1->setValue(static_cast<double>(_inc1)); dSpinBoxInc1->setToolTip(QString::number(_inc1).toUpper());}
     void setInc2(double i) {_inc2 = static_cast<float>(i); dSpinBoxInc2->setValue(static_cast<double>(_inc2)); dSpinBoxInc2->setToolTip(QString::number(_inc2).toUpper());}
+    void setAddrName(const QString &name) {leAddress->setText(name);}
+    void setValue1Name(const QString &name) {leValue1->setText(name);}
+    void setValue2Name(const QString &name) {leValue2->setText(name);}
+    void setFlagsName(const QString &name) {leFlags->setText(name);}
     void incValue1() {setValue1(_value1 + _inc1); dSpinBoxValue1->setValue(static_cast<double>(_value1)); _value1 = static_cast<float>(dSpinBoxValue1->value());}
     void incValue2() {setValue2(_value2 + _inc2); dSpinBoxValue2->setValue(static_cast<double>(_value2)); _value2 = static_cast<float>(dSpinBoxValue2->value());}
     void randValue1() {setValue1(_value1 + ((qrand()%3)-1) * _inc1); _value1 = static_cast<float>(dSpinBoxValue1->value());}

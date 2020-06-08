@@ -151,6 +151,27 @@ bool cKoral::makeAnswer(tSensorType type)
                     .append(_pack.statusByte)
                     .append(_pack.emptyByte);
             break;
+    case BKS01Type:
+        // формируем заголовок пакета:
+        _packarray.append(_pack.dstByte)
+            .append(_pack.srcByte)
+            .append(koralConst::SCT)
+            .append(_pack.cmdByte);
+        // формируем поле данных
+        _packarray.append(10)                        // 10 параметров
+                .append(_pack.errorByte)
+                .append(_pack.statusByte)
+                .append(_pack.emptyByte)            // должен быть байт из суммы двух ошибок
+                .append(_pack.emptyByte);           // должен быть байт из суммы двух ошибок
+        if(_pack.cmdByte == koralCmdConst::MeasureVolume) {
+            for(int i = 0; i < 10; ++i)
+                _packarray.append(_pack.chnl[i].array[3]).append(_pack.chnl[i].array[2])
+                .append(_pack.chnl[i].array[1]).append(_pack.chnl[i].array[0]);
+        }
+        _packarray.append(_pack.errorByte)
+                .append(_pack.statusByte)
+                .append(_pack.emptyByte);
+        break;
         default:
             return false;
     }

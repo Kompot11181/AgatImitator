@@ -131,6 +131,11 @@ enum tSensorType
     KorallPlusType,
     PlusMassType,
     PlusVibroType,
+    BKS01Type,
+    BKS23Type,
+    BKS45Type,
+    BKS67Type,
+    BKS89Type,
     NumOfTypes
 };
 
