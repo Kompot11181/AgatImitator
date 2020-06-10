@@ -14,7 +14,7 @@
 //#define NO_CRC                          // если определено, игнорировать ошибку CRC
 
 namespace koralConst{
-    constexpr int maxChnls = 6;         // максимальное кол-во каналов в ответе
+    constexpr int maxChnls = 10;        // максимальное кол-во каналов в ответе
     constexpr int bytesPerChnl = 4;     // кол-во байт на канал (float)
 
     constexpr char SOT = '\x1F';        // Start Of Transaction
@@ -116,6 +116,7 @@ struct koralPack{
     char cmdByte;       // байт команды
     koralChannel chnl[koralConst::maxChnls];  // данные
     char errorByte;     // байт состояния (см. koralErrorConst)
+    koralChannel errArr;// поле ошибок (только для БКС)
     char statusByte;    // байт кода режима работы (см. koralStatConst)
     char emptyByte;     // пустой байт (=0)
     uint16_t crc;       // контрольная сумма
@@ -199,6 +200,7 @@ public:
     void setSrc(const char src) {_pack.srcByte = src;}   // задать адрес расходомера
     void setCmd(const char cmd) {_pack.cmdByte = cmd;}   // задать номер команды
     void setErr(const char err) {_pack.errorByte = err;} // задать байт состояния
+    void setErrArray (const qint32 err) {_pack.errArr.idata = err;} // задать поле ошибок БКС
     void setStat(const char st) {_pack.statusByte = st;} // задать байт кода режима работы
     void setData(const int i, const float d)             // задать данные
     {

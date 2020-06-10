@@ -14,7 +14,7 @@ void cKoral::clear()
     _pack.spaceByte = 0; _packCMD.spaceByte = 0;
     _pack.cmdByte = 0;   _packCMD.cmdByte = 0;
     for(int i = 0; i < koralConst::maxChnls; ++i) _pack.chnl[i].idata = 0;
-    _pack.errorByte = 0;
+    _pack.errorByte = 0; _pack.errArr.idata = 0;
     _pack.statusByte = 0;
     _pack.emptyByte = 0;
     _pack.crc = 0;       _packCMD.crc = 0;
@@ -159,18 +159,15 @@ bool cKoral::makeAnswer(tSensorType type)
             .append(_pack.cmdByte);
         // формируем поле данных
         _packarray.append(10)                        // 10 параметров
-                .append(_pack.errorByte)
-                .append(_pack.statusByte)
-                .append(_pack.emptyByte)            // должен быть байт из суммы двух ошибок
-                .append(_pack.emptyByte);           // должен быть байт из суммы двух ошибок
+                .append(_pack.errArr.array[3])
+                .append(_pack.errArr.array[2])
+                .append(_pack.errArr.array[1])
+                .append(_pack.errArr.array[0]);
         if(_pack.cmdByte == koralCmdConst::MeasureVolume) {
             for(int i = 0; i < 10; ++i)
                 _packarray.append(_pack.chnl[i].array[3]).append(_pack.chnl[i].array[2])
                 .append(_pack.chnl[i].array[1]).append(_pack.chnl[i].array[0]);
         }
-        _packarray.append(_pack.errorByte)
-                .append(_pack.statusByte)
-                .append(_pack.emptyByte);
         break;
         default:
             return false;

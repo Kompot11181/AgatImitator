@@ -113,7 +113,7 @@ private:
     };
 // максимальное значение байта ошибки и байта статуса
     const quint8 errStatMaxValues[SensorsCount][2] =
-    {{6, 7}, {7, 1}, {0, 0x7F}, {8, 7}, {0, 0}, {0, 0}, {0xFF, 0xFF}, {0xF, 0xF}, {0xF, 0xF}, {0, 0}, {0, 0}};
+    {{6, 7}, {7, 1}, {0, 0x7F}, {8, 7}, {0, 0}, {0, 0}, {0xFF, 0x00}, {0xF, 0xF}, {0xF, 0xF}, {0xF, 0xF}, {0, 0}};
 // подсказки
     const QString SensorHint[SensorsCount][4] = {
 //Коралл
@@ -200,19 +200,19 @@ private:
         },          //+Вибро
         {tr("Значение 0-го параметра"),
          tr("Значение 1-го параметра"),
-         tr("Ошибка БКС"), tr("Ошибка первого/второго канала")
+         tr("Общая ошибка БКС"), tr("")
         },          // БКС 01+
         {tr("Значение 2-го параметра"),
          tr("Значение 3-го параметра"),
-         tr("Ошибка третьего канала"), tr("Ошибка четвертого канала")
+         tr("Ошибка первого канала"), tr("Ошибка второго канала")
         },          // +БКС 23
         {tr("Значение 4-го параметра"),
          tr("Значение 5-го параметра"),
-         tr("Ошибка пятого канала"), tr("Ошибка шестого канала")
+         tr("Ошибка третьего канала"), tr("Ошибка четвертого канала")
         },          // +БКС 45
         {tr("Значение 6-го параметра"),
          tr("Значение 7-го параметра"),
-         tr(""), tr("")
+         tr("Ошибка пятого канала"), tr("Ошибка шестого канала")
         },          // +БКС 67
         {tr("Значение 8-го параметра"),
          tr("Значение 9-го параметра"),
@@ -227,8 +227,8 @@ public slots:
     void setAddr(int adr) {_addr = static_cast<quint8>(adr); spinBoxAddress->setValue(_addr); spinBoxAddress->setToolTip("0x" + QString::number(_addr, 16).toUpper());}
     void setType(int type);
     void setFixedType () {comboBoxType->setEnabled(false); spinBoxAddress->setEnabled(false);}
-    void setFixedState() {spinBoxErr->setVisible(false); spinBoxStat->setVisible(false); leFlags->setVisible(false);
-        horLayout->addItem(new QSpacerItem(spinBoxErr->width() + spinBoxStat->width() + leFlags->width() + 3*horLayout->spacing(), 20, QSizePolicy::Fixed, QSizePolicy::Minimum));}
+    void setFixedState() {spinBoxErr->setVisible(false); spinBoxStat->setVisible(false); leFlags->setText("...");
+        horLayout->addItem(new QSpacerItem(spinBoxErr->width() + spinBoxStat->width() + 2*horLayout->spacing(), 20, QSizePolicy::Fixed, QSizePolicy::Minimum));}
     void setErr(int er) {spinBoxErr->setValue(er); _err = static_cast<quint8>(spinBoxErr->value());}
     void setStat(int st) {spinBoxStat->setValue(st); _stat = static_cast<quint8>(spinBoxStat->value());}
     void setRnd1(bool rnd) {_rnd1 = rnd; checkBoxRnd1->setChecked(_rnd1);}

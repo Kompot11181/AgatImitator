@@ -1,0 +1,87 @@
+### Qt ###
+# C++ objects and libs
+
+*.slo
+*.lo
+*.o
+*.a
+*.la
+*.lai
+*.so
+*.dll
+*.dylib
+
+# Qt-es
+
+/.qmake.cache
+/.qmake.stash
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.moc
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+Makefile*
+*build-*
+
+
+
+# auto generate files for static build
+
+*_plugin_import.cpp
+*_qml_plugin_import.cpp
+
+
+
+# object_script generate only in Windows
+
+object_script.*.Debug
+object_script.*.Release
+
+
+
+# QtCreator
+
+# A listing of all the files included in the project
+*.files
+
+# Include directories
+*.includes
+
+# Project configuration settings like predefined Macros
+*.config
+
+# Qt Creator settings
+*.creator
+
+# User project settings
+*.creator.user
+
+# Qt Creator backups
+*.autosave
+
+
+# QtCtreator Qml
+*.qmlproject.user
+*.qmlproject.user.*
+
+# QtCtreator CMake
+CMakeLists.txt.user*
+
+
+
+# Binary files
+debug/
+release/
+
+
+
+# Temp files
+*.*~
+
+
+
+# Files that we don't want to ignore
+!.gitignore

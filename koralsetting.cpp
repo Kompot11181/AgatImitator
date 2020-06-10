@@ -107,11 +107,12 @@ cKoralSetting::cKoralSetting(QWidget *parent) : QWidget(parent)
     checkBoxRnd2->setText("");
     horLayout->addWidget(checkBoxRnd2);
 
-    horSpacer = new QSpacerItem(10, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    horSpacer = new QSpacerItem(10, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
     horLayout->addItem(horSpacer);
 
     leFlags = new QLineEdit(backwidget);
-    leFlags->setFixedSize(QSize(70, 20));
+    leFlags->setBaseSize(QSize(70, 20));
+    leFlags->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     leFlags->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
     leFlags->setFrame(false);
     horLayout->addWidget(leFlags);

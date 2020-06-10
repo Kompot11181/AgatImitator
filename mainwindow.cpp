@@ -228,19 +228,24 @@ void MainWindow::serialReceive(QByteArray pck)
             // для БКС взять и изменить значения для виртуальных датчиков
             if (koral_list.at(koral_in_list)->getType() == BKS01Type) {
                 cKoralSetting *k2, *k3, *k4, *k5;
+                koralChannel err; err.idata = 0;
+                err.array[3] = koral_list.at(koral_in_list)->getErr();
                 if(koral_list.at(koral_in_list+1)->getType() == BKS23Type) {
                     k2 = koral_list.at(koral_in_list+1);
                     k2->step();
+                    err.array[2] = ((k2->getErr() & 0x0F) << 4) | (k2->getStat() & 0x0F);
                     koralpack.setData(2,k2->getValue1());
                     koralpack.setData(3,k2->getValue2());
                     if(koral_list.at(koral_in_list+2)->getType() == BKS45Type) {
                         k3 = koral_list.at(koral_in_list+2);
                         k3->step();
+                        err.array[1] = ((k3->getErr() & 0x0F) << 4) | (k3->getStat() & 0x0F);
                         koralpack.setData(4,k3->getValue1());
                         koralpack.setData(5,k3->getValue2());
                         if(koral_list.at(koral_in_list+3)->getType() == BKS67Type) {
                             k4 = koral_list.at(koral_in_list+3);
                             k4->step();
+                            err.array[0] = ((k4->getErr() & 0x0F) << 4) | (k4->getStat() & 0x0F);
                             koralpack.setData(6,k4->getValue1());
                             koralpack.setData(7,k4->getValue2());
                             if(koral_list.at(koral_in_list+4)->getType() == BKS89Type) {
@@ -252,6 +257,7 @@ void MainWindow::serialReceive(QByteArray pck)
                         }
                     }
                 }
+                koralpack.setErrArray(err.idata);
                 ok = koralpack.makeAnswer(BKS01Type);
             }
         }
@@ -401,7 +407,6 @@ void MainWindow::on_pbPlus_clicked()
             ui->vLayout->addWidget(koral_list.last());
             koral_list.append(new cKoralSetting(koral_list.length()+1, BKS67Type, koral_list.at(koral_list.length()-1)->getAddr()));
             koral_list.at(koral_list.length()-1)->setFixedType();
-            koral_list.at(koral_list.length()-1)->setFixedState();
             ui->vLayout->addWidget(koral_list.last());
             koral_list.append(new cKoralSetting(koral_list.length()+1, BKS89Type, koral_list.at(koral_list.length()-1)->getAddr()));
             koral_list.at(koral_list.length()-1)->setFixedType();
