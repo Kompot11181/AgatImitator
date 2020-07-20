@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 
 #define PROGRAM_NAME "AGAT-Imitator"
-#define VERSION_NAME "v.0.92"
+#define VERSION_NAME "v.0.93"
 #define PROG_DATE __DATE__
 #define PROG_TIME  __TIME__
 
@@ -14,16 +14,14 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    QPixmap imageAgat(":/Agat_big_grey.png");
-    ui->pbLoad->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
-    ui->pbSave->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
+    QPixmap imageAgat(":/images/Agat_big_grey.png");
     imageAgat.setMask(imageAgat.createMaskFromColor(QColor(128,128,128),Qt::MaskInColor));
     ui->label->setPixmap(imageAgat.scaled(ui->label->size(),Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
 
     QLabel * L = new QLabel();
     L->setFixedSize(25,10);
     L->setStatusTip("mailto: chosen_i@inbox.ru");
-    QPixmap imageJK(":/jk.png");
+    QPixmap imageJK(":/images/jk.png");
     setWindowTitle(windowTitle() + " " + VERSION_NAME);
     imageJK.setMask(imageJK.createMaskFromColor(QColor(255,255,255),Qt::MaskInColor));
     L->setPixmap(imageJK.scaled(L->size(),Qt::KeepAspectRatio, Qt::FastTransformation));
@@ -44,8 +42,6 @@ MainWindow::MainWindow(QWidget *parent) :
     sp->addWidget(ui->groupBox);
     ui->vCentralLayout->addWidget(sp);
 
-    ui->pbClear->setIcon(style()->standardIcon(QStyle::SP_LineEditClearButton));
-    ui->pbClear->setText("");
     ui->pbClear->setParent(ui->teInputData);
     QHBoxLayout *hblInputData = new QHBoxLayout();  //ui->teInputData);
     QVBoxLayout *vblInputData = new QVBoxLayout();  //ui->teInputData);
@@ -459,7 +455,7 @@ void MainWindow::contextMenuRequested(QPoint point)
     // объявление и инициализация конеткстного меню
     QMenu * menu = ui->leOutputData->createStandardContextMenu(); //new QMenu(ui->leOutputData->window());
     // создание нового действия
-    QAction * act_copy = new QAction(style()->standardIcon(QStyle::SP_FileDialogDetailedView), tr("Копировать"), menu->parent());
+    QAction * act_copy = new QAction(QIcon(":/images/copy.ico"), tr("Копировать"), menu->parent());
     // описание сочетания клавиш (только лишь?)
     act_copy->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
     // соединение действия с функцией копирования в буфер обмена

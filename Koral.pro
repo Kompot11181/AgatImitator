@@ -10,6 +10,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 QMAKE_CXXFLAGS += -std=c++0x
 
+RC_ICONS = images/list.ico
+
 TARGET = AgatImitator
 TEMPLATE = app
 
@@ -34,5 +36,4 @@ FORMS    += mainwindow.ui
 RESOURCES += \
     icons.qrc
 
-DISTFILES += \
-    file.rc
+#DISTFILES += file.rc

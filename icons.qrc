@@ -1,7 +1,17 @@
 <RCC>
     <qresource prefix="/">
-        <file>List.ico</file>
-        <file>Agat_big_grey.png</file>
-        <file>jk.png</file>
+        <file>images/list.ico</file>
+        <file>images/Agat_big_grey.png</file>
+        <file>images/jk.png</file>
+        <file>images/comport.png</file>
+        <file>images/load.ico</file>
+        <file>images/save.ico</file>
+        <file>images/sensor_1.png</file>
+        <file>images/sensor_2.png</file>
+        <file>images/sensor_3.png</file>
+        <file>images/sensor_7.png</file>
+        <file>images/sensor_8.png</file>
+        <file>images/clear.png</file>
+        <file>images/copy.ico</file>
     </qresource>
 </RCC>

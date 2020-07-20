@@ -32,10 +32,10 @@ cKoralSetting::cKoralSetting(QWidget *parent) : QWidget(parent)
     horLayout->addWidget(spinBoxAddress);
 
     comboBoxType = new QComboBox(backwidget);
-    comboBoxType->setFixedSize(80, 20);
+    comboBoxType->setFixedSize(100, 20);
     comboBoxType->setMaxCount(SensorsCount);
     for (int i = 0; i < tSensorType::NumOfTypes; ++i)
-        comboBoxType->addItem(SensorsName[i]);
+        comboBoxType->addItem(QIcon(SensorsImage[i]), SensorsName[i]);
     QStandardItemModel* model = (QStandardItemModel*) comboBoxType->model();
     model->item(tSensorType::PlusMassType)->setEnabled(false);
     model->item(tSensorType::PlusVibroType)->setEnabled(false);

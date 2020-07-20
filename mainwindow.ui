@@ -21,7 +21,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="icons.qrc">
-    <normaloff>:/List.ico</normaloff>:/List.ico</iconset>
+    <normaloff>:/images/list.ico</normaloff>:/images/list.ico</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="layoutDirection">
@@ -74,6 +74,10 @@
         <property name="text">
          <string/>
         </property>
+        <property name="icon">
+         <iconset resource="icons.qrc">
+          <normaloff>:/images/load.ico</normaloff>:/images/load.ico</iconset>
+        </property>
         <property name="iconSize">
          <size>
           <width>24</width>
@@ -104,6 +108,10 @@
         </property>
         <property name="text">
          <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="icons.qrc">
+          <normaloff>:/images/save.ico</normaloff>:/images/save.ico</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -209,6 +217,10 @@
         </property>
         <property name="text">
          <string>Открыть</string>
+        </property>
+        <property name="icon">
+         <iconset resource="icons.qrc">
+          <normaloff>:/images/comport.png</normaloff>:/images/comport.png</iconset>
         </property>
        </widget>
       </item>
@@ -626,7 +638,11 @@ p, li { white-space: pre-wrap; }
             <bool>false</bool>
            </property>
            <property name="text">
-            <string>Очистить</string>
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="icons.qrc">
+             <normaloff>:/images/clear.png</normaloff>:/images/clear.png</iconset>
            </property>
            <property name="default">
             <bool>false</bool>

@@ -95,8 +95,6 @@ private:
     QDoubleSpinBox * dSpinBoxValue2;
     QDoubleSpinBox * dSpinBoxInc2;
 
-    static const int ErrorCount = 9;
-    static const int StatusCount = 8;
     static const int SensorsCount = NumOfTypes;
     const QString SensorsName[SensorsCount] = {
         tr("Коралл-8"),
@@ -111,9 +109,24 @@ private:
         tr("+БКС 67+"),
         tr("+БКС 89 ")
     };
+
+    const QString SensorsImage[SensorsCount] = {
+        ":/images/sensor_2.png",
+        ":/images/sensor_1.png",
+        ":/images/sensor_3.png",
+        ":/images/sensor_7.png",
+        "",
+        "",
+        ":/images/sensor_8.png",
+        "",
+        "",
+        "",
+        ""
+    };
+
 // максимальное значение байта ошибки и байта статуса
     const quint8 errStatMaxValues[SensorsCount][2] =
-    {{6, 7}, {7, 1}, {0, 0x7F}, {8, 7}, {0, 0}, {0, 0}, {0xFF, 0x00}, {0xF, 0xF}, {0xF, 0xF}, {0xF, 0xF}, {0, 0}};
+    {{6, 7}, {7, 1}, {0x7F, 0}, {8, 7}, {0, 0}, {0, 0}, {0xFF, 0x00}, {0xF, 0xF}, {0xF, 0xF}, {0xF, 0xF}, {0, 0}};
 // подсказки
     const QString SensorHint[SensorsCount][4] = {
 //Коралл
@@ -156,8 +169,7 @@ private:
 //КРУ-1В
         {tr("Значение первого параметра (измеренное значение уровня жидкости)"),
          tr("Значение второго параметра (не используется)"),
-         tr("не используется"),
-         tr("Байт статуса:\n"
+         tr("Байт статуса (ошибки):\n"
              "0 - рабочий режим\n"
              "1 - нет ПП\n"
              "2 - плохая связь с ПП\n"
@@ -166,6 +178,7 @@ private:
              "16 - ошибка поиска импульсов или измерения\n"
              "32 - не соответствия з/н ПП и ВП\n"
              "64 - прочие ошибки"),
+         tr("не используется"),
         },                    //КРУ-1В
 //Коралл+
         {tr("Значение первого параметра (измеренное значение объёмного расхода)"),

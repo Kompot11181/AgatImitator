@@ -125,7 +125,7 @@ bool cKoral::makeAnswer(tSensorType type)
                 .append(koralConst::SCT)
                 .append(_pack.cmdByte);
             // формируем поле данных
-            _packarray.append(_pack.statusByte); // возможно, что-то другое
+            _packarray.append(_pack.errorByte);
             _packarray.append(_pack.chnl[0].array[3]).append(_pack.chnl[0].array[2])
                       .append(_pack.chnl[0].array[1]).append(_pack.chnl[0].array[0]);
             break;
