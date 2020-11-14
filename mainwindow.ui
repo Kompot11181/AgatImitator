@@ -76,7 +76,7 @@
         </property>
         <property name="icon">
          <iconset resource="icons.qrc">
-          <normaloff>:/images/load.ico</normaloff>:/images/load.ico</iconset>
+          <normaloff>:/images/load.png</normaloff>:/images/load.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -111,7 +111,7 @@
         </property>
         <property name="icon">
          <iconset resource="icons.qrc">
-          <normaloff>:/images/save.ico</normaloff>:/images/save.ico</iconset>
+          <normaloff>:/images/save.png</normaloff>:/images/save.png</iconset>
         </property>
         <property name="iconSize">
          <size>
