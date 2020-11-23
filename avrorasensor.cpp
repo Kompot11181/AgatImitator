@@ -1,19 +1,22 @@
-#include "koral.h"
+#include "avrorasensor.h"
 
-cKoral::cKoral()
+AvroraSensor::AvroraSensor()
 {
 
 }
 
 // clear pack; pack = 0
-void cKoral::clear()
+void AvroraSensor::clear()
 {
     _pack.startByte = 0; _packCMD.startByte = 0;
     _pack.srcByte = 0;   _packCMD.srcByte = 0;
     _pack.dstByte = 0;   _packCMD.dstByte = 0;
     _pack.spaceByte = 0; _packCMD.spaceByte = 0;
     _pack.cmdByte = 0;   _packCMD.cmdByte = 0;
-    for(int i = 0; i < koralConst::maxChnls; ++i) _pack.chnl[i].idata = 0;
+    for(int i = 0; i < AvroraConst::maxChnls; ++i) {
+        _pack.chnl[i].idata = 0;
+        _pack.statusArr[i] = 0;
+    }
     _pack.errorByte = 0; _pack.errArr.idata = 0;
     _pack.statusByte = 0;
     _pack.emptyByte = 0;
@@ -24,16 +27,16 @@ void cKoral::clear()
 }
 
 
-bool cKoral::updateCMDPack(QByteArray pck)
+bool AvroraSensor::updateCMDPack(QByteArray pck)
 {
-    using namespace koralConst;
+    using namespace AvroraConst;
     clear();
     // режет возможные артефакты в начале пакета до первого байта полезных данных
-    pck = pck.mid(pck.indexOf(koralConst::SOT));
+    pck = pck.mid(pck.indexOf(AvroraConst::SOT));
     // заменить задвоенные символы признака начала пакета на одинарные
-    pck.replace(QByteArray(2, koralConst::SOT), QByteArray(1, koralConst::SOT));
+    pck.replace(QByteArray(2, AvroraConst::SOT), QByteArray(1, AvroraConst::SOT));
     // заменить задвоенные символы признака конца пакета на одинарные
-    pck.replace(QByteArray(2, koralConst::EOT), QByteArray(1, koralConst::EOT));
+    pck.replace(QByteArray(2, AvroraConst::EOT), QByteArray(1, AvroraConst::EOT));
     int endptr = pck.length()-1;    // указатель на последний элемент массива
 
     // look for start of transaction
@@ -88,14 +91,15 @@ bool cKoral::updateCMDPack(QByteArray pck)
     return true;
 }
 
-bool cKoral::makeAnswer(tSensorType type)
+bool AvroraSensor::makeAnswer(tSensorType type)
 {
+    _packarray.clear();
     switch(type){
-        case KorallType:
+        case KorallType: {
             // формируем заголовок пакета:
             _packarray.append(_pack.dstByte)
                 .append(_pack.srcByte)
-                .append(koralConst::SCT)
+                .append(AvroraConst::SCT)
                 .append(_pack.cmdByte);
             // формируем поле данных
             for(int i = 0; i < 3; ++i)
@@ -104,12 +108,12 @@ bool cKoral::makeAnswer(tSensorType type)
             _packarray.append(_pack.errorByte)
                     .append(_pack.statusByte)
                     .append(_pack.emptyByte);
-            break;
-        case VibroType:
+            break; }
+        case VibroType: {
             // формируем заголовок пакета:
             _packarray.append(_pack.dstByte)
                 .append(_pack.srcByte)
-                .append(koralConst::SCT)
+                .append(AvroraConst::SCT)
                 .append(_pack.cmdByte);
             // формируем поле данных
             _packarray.append(_pack.errorByte)
@@ -117,23 +121,23 @@ bool cKoral::makeAnswer(tSensorType type)
             for(int i = 0; i < 3; ++i)
                 _packarray.append(_pack.chnl[i].array[3]).append(_pack.chnl[i].array[2])
                 .append(_pack.chnl[i].array[1]).append(_pack.chnl[i].array[0]);
-            break;
-        case KRUType:
+            break; }
+        case KRUType: {
             // формируем заголовок пакета:
             _packarray.append(_pack.dstByte)
                 .append(_pack.srcByte)
-                .append(koralConst::SCT)
+                .append(AvroraConst::SCT)
                 .append(_pack.cmdByte);
             // формируем поле данных
             _packarray.append(_pack.errorByte);
             _packarray.append(_pack.chnl[0].array[3]).append(_pack.chnl[0].array[2])
                       .append(_pack.chnl[0].array[1]).append(_pack.chnl[0].array[0]);
-            break;
-        case KorallPlusType:
+            break; }
+        case KorallPlusType: {
             // формируем заголовок пакета:
             _packarray.append(_pack.dstByte)
                 .append(_pack.srcByte)
-                .append(koralConst::SCT)
+                .append(AvroraConst::SCT)
                 .append(_pack.cmdByte);
             // формируем поле данных
             if(_pack.cmdByte < koralCmdConst::MeasureDensity){
@@ -150,12 +154,28 @@ bool cKoral::makeAnswer(tSensorType type)
             _packarray.append(_pack.errorByte)
                     .append(_pack.statusByte)
                     .append(_pack.emptyByte);
-            break;
-    case BKS01Type:
+            break; }
+        case BKS14Type: {
         // формируем заголовок пакета:
         _packarray.append(_pack.dstByte)
             .append(_pack.srcByte)
-            .append(koralConst::SCT)
+            .append(AvroraConst::SCT)
+            .append(_pack.cmdByte);
+        // формируем поле данных
+        _packarray.append('\0').append('\0');                       // 2 байта статуса БКС
+        for(int i = 0; i < 6; ++i) {
+            _packarray.append(_pack.chnl[i].array[3]).append(_pack.chnl[i].array[2])
+                      .append(_pack.chnl[i].array[1]).append(_pack.chnl[i].array[0]);
+            if (_pack.cmdByte == 0x06) {_packarray.append(_pack.statusArr[i] | 0x10);    // режим "Контроль" включён
+            } else {                    _packarray.append(_pack.statusArr[i]);};
+        }
+        break;}
+
+        case BKS16Type: {
+        // формируем заголовок пакета:
+        _packarray.append(_pack.dstByte)
+            .append(_pack.srcByte)
+            .append(AvroraConst::SCT)
             .append(_pack.cmdByte);
         // формируем поле данных
         _packarray.append(10)                        // 10 параметров
@@ -163,12 +183,10 @@ bool cKoral::makeAnswer(tSensorType type)
                 .append(_pack.errArr.array[2])
                 .append(_pack.errArr.array[1])
                 .append(_pack.errArr.array[0]);
-        if(_pack.cmdByte == koralCmdConst::MeasureVolume) {
-            for(int i = 0; i < 10; ++i)
-                _packarray.append(_pack.chnl[i].array[3]).append(_pack.chnl[i].array[2])
-                .append(_pack.chnl[i].array[1]).append(_pack.chnl[i].array[0]);
-        }
-        break;
+        for(int i = 0; i < 10; ++i)
+            _packarray.append(_pack.chnl[i].array[3]).append(_pack.chnl[i].array[2])
+            .append(_pack.chnl[i].array[1]).append(_pack.chnl[i].array[0]);
+        break;}
         default:
             return false;
     }
@@ -176,28 +194,28 @@ bool cKoral::makeAnswer(tSensorType type)
     return true;
 }
 
-void cKoral::combineAnswer(QByteArray & pck)
+void AvroraSensor::combineAnswer(QByteArray & pck)
 {
     // расчёт контрольной суммы и формирование конца пакета
-    uint16_t crc = cKoral::crc16(pck, 0, pck.length()-1);
+    uint16_t crc = AvroraSensor::crc16(pck, 0, pck.length()-1);
     pck.append(crc & 0x00FF)
         .append((crc >> 8) & 0x00FF);
     // заменить одинарные символы признака начала пакета на двойные
-    pck.replace(QByteArray(1, koralConst::SOT), QByteArray(2, koralConst::SOT));
+    pck.replace(QByteArray(1, AvroraConst::SOT), QByteArray(2, AvroraConst::SOT));
     // заменить одинырные символы признака конца пакета на двойные
-    pck.replace(QByteArray(1, koralConst::EOT), QByteArray(2, koralConst::EOT));
+    pck.replace(QByteArray(1, AvroraConst::EOT), QByteArray(2, AvroraConst::EOT));
     //добавить признак начала пакета
-    pck.insert(0, koralConst::SOT);
+    pck.insert(0, AvroraConst::SOT);
     //добавить признак конца пакета
-    pck.append(koralConst::EOT)
-        .append(koralConst::STT);
+    pck.append(AvroraConst::EOT)
+        .append(AvroraConst::STT);
 }
 
 // подсчёт контрольной суммы.
 // входные данные - массив байт, стартовый номер байта, конечный номер байта
 // для подсчёта.
 // алгоритм основан на данных из сгенерированной таблицы tblcrc[256]
-uint16_t cKoral::crc16(QByteArray arr, int start, int end)
+uint16_t AvroraSensor::crc16(QByteArray arr, int start, int end)
 {
     uint16_t crc = 0;
     for(int i = start; i <= end; ++i)

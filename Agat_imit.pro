@@ -23,13 +23,13 @@ win32 {
 SOURCES += main.cpp\
         mainwindow.cpp \
     sg_comport.cpp \
-    koral.cpp \
-    koralsetting.cpp
+    avrorasensor.cpp \
+    sensorsettings.cpp
 
 HEADERS  += mainwindow.h \
     sg_comport.h \
-    koral.h \
-    koralsetting.h
+    avrorasensor.h \
+    sensorsettings.h
 
 FORMS    += mainwindow.ui
 

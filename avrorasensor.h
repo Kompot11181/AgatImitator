@@ -1,19 +1,19 @@
 /***************************************************
- *  класс пакета БКС
+ *  класс пакета протокола Аврора
  * –	скорость передачи, бит/сек	57600;
  * –	количество бит данных	8;
  * –	стоп-бит 	1
  *
  ***************************************************/
 
-#ifndef KORAL_H
-#define KORAL_H
+#ifndef AVRORASENSOR_H
+#define AVRORASENSOR_H
 #include <QObject>
 #include <QDebug>
 
 //#define NO_CRC                          // если определено, игнорировать ошибку CRC
 
-namespace koralConst{
+namespace AvroraConst{
     constexpr int maxChnls = 10;        // максимальное кол-во каналов в ответе
     constexpr int bytesPerChnl = 4;     // кол-во байт на канал (float)
 
@@ -92,10 +92,10 @@ typedef union{
     char	array[sizeof(float)];
     float   fdata;
     qint32  idata;
-}koralChannel;
+}AvroraChannel;
 
-// Запрос значений с Коралла
-struct koralPackCMD{
+// Запрос значений для датчиков
+struct AvroraPackCMD{
     char startByte;     // стартовый байт 0x1F
     char dstByte;       // адрес расходомера
     char srcByte;       // адрес источника запроса
@@ -107,17 +107,18 @@ struct koralPackCMD{
     char stopByte;      // стоп-байт транзакции
 };
 
-// ответ, сформиованный Кораллом
-struct koralPack{
+// ответ, сформиованный датчиком (концентратором)
+struct AvroraPack{
     char startByte;     // стартовый байт 0x1F
     char dstByte;       // адрес источника запроса
     char srcByte;       // адрес расходомера
     char spaceByte;     // байт-разделитель 0x24
     char cmdByte;       // байт команды
-    koralChannel chnl[koralConst::maxChnls];  // данные
+    AvroraChannel chnl[AvroraConst::maxChnls];  // данные
     char errorByte;     // байт состояния (см. koralErrorConst)
-    koralChannel errArr;// поле ошибок (только для БКС)
-    char statusByte;    // байт кода режима работы (см. koralStatConst)
+    AvroraChannel errArr;// поле ошибок (только для БКС)
+    char statusByte;    // байт кода режима работы
+    char statusArr[AvroraConst::maxChnls];  // массив статусов для каждого канала (для БКС14)
     char emptyByte;     // пустой байт (=0)
     uint16_t crc;       // контрольная сумма
     char endByte;       // байт конца посылки
@@ -130,13 +131,16 @@ enum tSensorType
     VibroType,
     KRUType,
     KorallPlusType,
-    PlusMassType,
-    PlusVibroType,
-    BKS01Type,
-    BKS23Type,
-    BKS45Type,
-    BKS67Type,
-    BKS89Type,
+    KorallPlusType1,
+    KorallPlusType2,
+    BKS14Type,
+    BKS14Type1,
+    BKS14Type2,
+    BKS16Type,
+    BKS16Type1,
+    BKS16Type2,
+    BKS16Type3,
+    BKS16Type4,
     NumOfTypes
 };
 
@@ -187,10 +191,10 @@ static constexpr uint16_t tblcrc[256] = {
         0x6e17,  0x7e36,  0x4e55,  0x5e74,  0x2e93,  0x3eb2,  0x0ed1,  0x1ef0
 };
 
-class cKoral
+class AvroraSensor
 {
 public:
-    cKoral();
+    AvroraSensor();
     char getDst() const {return _packCMD.dstByte;}   // получить адрес запрашиваемого расходомера
     char getSrc() const {return _packCMD.srcByte;}   // получить адрес источника запроса
     char getCmd() const {return _packCMD.cmdByte;}   // получить код команды
@@ -200,11 +204,12 @@ public:
     void setSrc(const char src) {_pack.srcByte = src;}   // задать адрес расходомера
     void setCmd(const char cmd) {_pack.cmdByte = cmd;}   // задать номер команды
     void setErr(const char err) {_pack.errorByte = err;} // задать байт состояния
-    void setErrArray (const qint32 err) {_pack.errArr.idata = err;} // задать поле ошибок БКС
+    void setErr32(const qint32 err) {_pack.errArr.idata = err;} // задать поле ошибок БКС
     void setStat(const char st) {_pack.statusByte = st;} // задать байт кода режима работы
+    void setStatArray(const int num, const char st) {_pack.statusArr[num] = st;}  // массив статусов
     void setData(const int i, const float d)             // задать данные
     {
-        if( (i >= 0) && (i < koralConst::maxChnls) )
+        if( (i >= 0) && (i < AvroraConst::maxChnls) )
             _pack.chnl[i].fdata = d;
     }
 
@@ -212,15 +217,15 @@ public:
     QString getErrorMsg(int ec) const {return _errorMsg[ec];}        // содеражит описание кода ошибки
 
     void clear();                           // очистка данных packCMD, pack
-    bool updateCMDPack(QByteArray);         // преобразует QByteArray в koralPackCMD, выдаёт true, если успешно
-    bool makeAnswer(tSensorType type);           // формирует koralPack, выдаёт true, если успешно
+    bool updateCMDPack(QByteArray);         // преобразует QByteArray в AvroraPackCMD, выдаёт true, если успешно
+    bool makeAnswer(tSensorType type);           // формирует AvroraPack, выдаёт true, если успешно
 
     static void combineAnswer(QByteArray & pck);    // дописывает контрольную сумму, байты начала, конца (+ возможный дубляж)
     static uint16_t crc16(QByteArray arr, int start, int end);
 
 private:
-    koralPackCMD _packCMD;   // содержит последний пакет запроса (команды)
-    koralPack _pack;         // содержит ответ на запрос
+    AvroraPackCMD _packCMD;   // содержит последний пакет запроса (команды)
+    AvroraPack _pack;         // содержит ответ на запрос
     QByteArray _packarray;   // содержит ответ в виде массива байтов
     ERR_CODE _errorCode;
     const QString _errorMsg[static_cast<int>(ERR_CODE::ERR_MAX_ERROR)] = {
@@ -235,4 +240,4 @@ private:
 };
 
 
-#endif // KORAL_H
+#endif // AVRORASENSOR_H

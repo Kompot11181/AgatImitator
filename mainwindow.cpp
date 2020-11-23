@@ -2,11 +2,11 @@
 #include "ui_mainwindow.h"
 
 #define PROGRAM_NAME "AGAT-Imitator"
-#define VERSION_NAME "v.0.94"
+#define VERSION_NAME "v.0.95"
 #define PROG_DATE __DATE__
 #define PROG_TIME  __TIME__
 
-QVector<cKoralSetting *> koral_list;
+QVector<SensorSettings *> sensorList;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -38,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QSplitter* sp = new QSplitter(Qt::Vertical, this);
 //    sp->setGeometry(this->rect());
     sp->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    sp->addWidget(ui->groupBoxKorals);
+    sp->addWidget(ui->groupBoxSensors);
     sp->addWidget(ui->groupBox);
     ui->vCentralLayout->addWidget(sp);
 
@@ -119,7 +119,7 @@ void MainWindow::serialReceive(QByteArray pck)
     pack += pck;
 //    qDebug() << "receive:" << pack.toHex();
 // если нашли символ конца сообщения, тогда продолжить
-    if(pack.contains(koralConst::STT))
+    if(pack.contains(AvroraConst::STT))
     {
         // вывод в окно, если разрешён
         if(ui->groupBox->isChecked())
@@ -127,27 +127,27 @@ void MainWindow::serialReceive(QByteArray pck)
             logOutStr = QString("%1 - %2 ").arg(QTime::currentTime().toString("HH:mm:ss.zzz ")).arg(static_cast<QString>(pack.toHex()).toUpper());
         }
         // получить первую команду из буфера (возможны в буфере несколько команд подряд), вырезав до символа конца сообщения
-        QByteArray onePack = pack.left(pack.indexOf(koralConst::STT) + 1);
+        QByteArray onePack = pack.left(pack.indexOf(AvroraConst::STT) + 1);
         // уменьшить буфер
-        pack = pack.right(pack.length() - pack.indexOf(koralConst::STT) - 1);
+        pack = pack.right(pack.length() - pack.indexOf(AvroraConst::STT) - 1);
         // попытаться расшифровать
-        cKoral koralpack;
+        AvroraSensor avroraSensor;
         // до тех пор пока не получится расшифровать правильно
-        while(!koralpack.updateCMDPack(onePack)){
+        while(!avroraSensor.updateCMDPack(onePack)){
             // добавить ещё хвост пакета до символа конца (вдруг STT попался в середине пакета)
-            if(pack.contains(koralConst::STT))
+            if(pack.contains(AvroraConst::STT))
             {
-                onePack.append(pack.left(pack.indexOf(koralConst::STT) + 1));
-                pack = pack.right(pack.length() - pack.indexOf(koralConst::STT) - 1);
+                onePack.append(pack.left(pack.indexOf(AvroraConst::STT) + 1));
+                pack = pack.right(pack.length() - pack.indexOf(AvroraConst::STT) - 1);
             }
             else
             {
              // если добавлять нечего, это ошибка (или пакет пришёл не полностью, но с байтом STT в середине)
                 if(ui->groupBox->isChecked())
                 {
-                    logOutStr += QString("- <font color = ""red"">Error #<b>%1</b>: %2</font>").arg(koralpack.getErrorCode()).arg(QString(koralpack.getErrorMsg(koralpack.getErrorCode())));
-                    if(koralpack.getErrorCode() == (int)ERR_CODE::ERR_WRONG_CRC)
-                        logOutStr += QString("<font color = ""red"">. Calculated: <b>%1</b></font>").arg(QString::number(((koralpack.getCRC()&0xFF)<<8) | (koralpack.getCRC()>>8), 16).toUpper());
+                    logOutStr += QString("- <font color = ""red"">Error #<b>%1</b>: %2</font>").arg(avroraSensor.getErrorCode()).arg(QString(avroraSensor.getErrorMsg(avroraSensor.getErrorCode())));
+                    if(avroraSensor.getErrorCode() == (int)ERR_CODE::ERR_WRONG_CRC)
+                        logOutStr += QString("<font color = ""red"">. Calculated: <b>%1</b></font>").arg(QString::number(((avroraSensor.getCRC()&0xFF)<<8) | (avroraSensor.getCRC()>>8), 16).toUpper());
                     ui->teInputData->append(logOutStr);
                 }
                 return;
@@ -156,105 +156,130 @@ void MainWindow::serialReceive(QByteArray pck)
         pack = "";  // очисить буфер (включая возможные неразоранные пакеты)
         ui->statusBar->showMessage(onePack.toHex().toUpper(), 1000);
 
-        // проверка на опрашиваемые Кораллы
-        quint8 dst = koralpack.getDst();
-        int koral_in_list = -1; // номер Коралла в списке заданных
-        for(int i = 0; i < koral_list.length(); ++i)
-            if(koral_list.at(i)->getAddr() == dst) {
-                koral_in_list = i;
+        // проверка на опрашиваемые датчики
+        quint8 dst = avroraSensor.getDst();
+        int sensor_in_list = -1; // номер датчика в списке заданных
+        for(int i = 0; i < sensorList.length(); ++i)
+            if(sensorList.at(i)->getAddr() == dst) {
+                sensor_in_list = i;
                 break;
             }
-        if (koral_in_list == -1)
+        if (sensor_in_list == -1)
         {
-            logOutStr += QString(" - <font color = ""green"">[%1: ??? ] <b>-</b></font>").arg(QString::number(dst));
+            logOutStr += QString(" - <font color = ""green"">[%1: ??? ] <b> не удалось распознать команду запроса</b></font>").arg(QString::number(dst));
             if(ui->groupBox->isChecked()) ui->teInputData->append(logOutStr);
             return;
         }
-        // проверка на команду Кораллу
-        if ((koralpack.getCmd() <= 0) &&(koralpack.getCmd() >= koralCmdConst::MaxNumOfCommands))
+        // проверка на команду датчику
+        if ((avroraSensor.getCmd() <= 0) &&(avroraSensor.getCmd() >= koralCmdConst::MaxNumOfCommands))
         {
             logOutStr += QString(" - <font color = ""green"">[%1: %2 ] неизвестная команда: <b>%3</b></font>")
                     .arg(QString::number(dst))
-                    .arg(koral_list.at(koral_in_list)->getName())
-                    .arg(QString::number(koralpack.getCmd()));
+                    .arg(sensorList.at(sensor_in_list)->getName())
+                    .arg(QString::number(avroraSensor.getCmd()));
             if(ui->groupBox->isChecked()) ui->teInputData->append(logOutStr);
             return;
         }
 
         // индикация посылки (светло-зелёный цвет)
-        koral_list.at(koral_in_list)->blink(100, QColor(230, 255, 240));
+        sensorList.at(sensor_in_list)->blink(100, QColor(230, 255, 240));
 
         // сформировать пакет ответа
-        koralpack.setDst(koralpack.getSrc());
-        koralpack.setSrc(koralpack.getDst());
-        koralpack.setCmd(koralpack.getCmd());
-        koralpack.setErr(koral_list.at(koral_in_list)->getErr());
-        koralpack.setStat(koral_list.at(koral_in_list)->getStat());
+        avroraSensor.setDst(avroraSensor.getSrc());
+        avroraSensor.setSrc(avroraSensor.getDst());
+        avroraSensor.setCmd(avroraSensor.getCmd());
+        avroraSensor.setErr(sensorList.at(sensor_in_list)->getErr());
+        avroraSensor.setStat(sensorList.at(sensor_in_list)->getStat());
         // изменить значение датчика
-        koral_list.at(koral_in_list)->step();
-        koralpack.setData(0, koral_list.at(koral_in_list)->getValue1());
-        koralpack.setData(1, koral_list.at(koral_in_list)->getValue2());
-        bool ok;
+        sensorList.at(sensor_in_list)->step();
+        avroraSensor.setData(0, sensorList.at(sensor_in_list)->getValue1());
+        avroraSensor.setData(1, sensorList.at(sensor_in_list)->getValue2());
+        bool ok = false;
         // проверить, вдруг обращение идёт к связке датчиков Коралл+Вибро
-        if((koral_list.at(koral_in_list)->getType() != KorallPlusType) &&
-           (koral_list.at(koral_in_list)->getType() != BKS01Type)) {
+        if((sensorList.at(sensor_in_list)->getType() != KorallPlusType) &&
+           (sensorList.at(sensor_in_list)->getType() != BKS16Type)  &&
+           (sensorList.at(sensor_in_list)->getType() != BKS14Type)) {
             // сформировать пакет для датчиков
-            koralpack.setData(2, 0.0);
-            ok = koralpack.makeAnswer(koral_list.at(koral_in_list)->getType());
+            avroraSensor.setData(2, 0.0);
+            ok = avroraSensor.makeAnswer(sensorList.at(sensor_in_list)->getType());
         }
         else
         {
-            // для Коралл+вибро взять и изменить значения для виртуальных датчиков
-            if (koral_list.at(koral_in_list)->getType() == KorallPlusType) {
-                cKoralSetting *k2, *k3;
-                if(koral_list.at(koral_in_list+1)->getType() == PlusMassType) {
-                    k2 = koral_list.at(koral_in_list+1);
+            // для Коралл+Вибро взять и изменить значения для виртуальных датчиков
+            if (sensorList.at(sensor_in_list)->getType() == KorallPlusType) {
+                SensorSettings *k2, *k3;
+                if(sensorList.at(sensor_in_list+1)->getType() == KorallPlusType1) {
+                    k2 = sensorList.at(sensor_in_list+1);
                     k2->step();
-                    koralpack.setData(2,k2->getValue1());
-                    koralpack.setData(3,k2->getValue2());
-                    if(koral_list.at(koral_in_list+2)->getType() == PlusVibroType) {
-                        k3 = koral_list.at(koral_in_list+2);
+                    avroraSensor.setData(2,k2->getValue1());
+                    avroraSensor.setData(3,k2->getValue2());
+                    if(sensorList.at(sensor_in_list+2)->getType() == KorallPlusType2) {
+                        k3 = sensorList.at(sensor_in_list+2);
                         k3->step();
-                        koralpack.setData(4,k3->getValue1());
-                        koralpack.setData(5,k3->getValue2());
+                        avroraSensor.setData(4,k3->getValue1());
+                        avroraSensor.setData(5,k3->getValue2());
                     }
                 }
-                ok = koralpack.makeAnswer(KorallPlusType);
+                ok = avroraSensor.makeAnswer(KorallPlusType);
             }
-            // для БКС взять и изменить значения для виртуальных датчиков
-            if (koral_list.at(koral_in_list)->getType() == BKS01Type) {
-                cKoralSetting *k2, *k3, *k4, *k5;
-                koralChannel err; err.idata = 0;
-                err.array[3] = koral_list.at(koral_in_list)->getErr();
-                if(koral_list.at(koral_in_list+1)->getType() == BKS23Type) {
-                    k2 = koral_list.at(koral_in_list+1);
+            // для БКС14 взять и изменить значения для виртуальных датчиков
+            if (sensorList.at(sensor_in_list)->getType() == BKS14Type) {
+                SensorSettings *k2, *k3;
+                avroraSensor.setStatArray(0, sensorList.at(sensor_in_list)->getErr());
+                avroraSensor.setStatArray(1, sensorList.at(sensor_in_list)->getStat());
+                if(sensorList.at(sensor_in_list+1)->getType() == BKS14Type1) {
+                    k2 = sensorList.at(sensor_in_list+1);
+                    k2->step();
+                    avroraSensor.setData(2,k2->getValue1());
+                    avroraSensor.setStatArray(2, k2->getErr());
+                    avroraSensor.setData(3,k2->getValue2());
+                    avroraSensor.setStatArray(3, k2->getStat());
+                    if(sensorList.at(sensor_in_list+2)->getType() == BKS14Type2) {
+                        k3 = sensorList.at(sensor_in_list+2);
+                        k3->step();
+                        avroraSensor.setData(4,k3->getValue1());
+                        avroraSensor.setStatArray(4, k3->getErr());
+                        avroraSensor.setData(5,k3->getValue2());
+                        avroraSensor.setStatArray(5, k3->getStat());
+                    }
+                }
+                //avroraSensor.setErrArray(err.idata);
+                ok = avroraSensor.makeAnswer(BKS14Type);
+            }
+            // для БКС16 взять и изменить значения для виртуальных датчиков
+            if (sensorList.at(sensor_in_list)->getType() == BKS16Type) {
+                SensorSettings *k2, *k3, *k4, *k5;
+                AvroraChannel err; err.idata = 0;
+                err.array[3] = sensorList.at(sensor_in_list)->getErr();
+                if(sensorList.at(sensor_in_list+1)->getType() == BKS16Type1) {
+                    k2 = sensorList.at(sensor_in_list+1);
                     k2->step();
                     err.array[2] = ((k2->getErr() & 0x0F) << 4) | (k2->getStat() & 0x0F);
-                    koralpack.setData(2,k2->getValue1());
-                    koralpack.setData(3,k2->getValue2());
-                    if(koral_list.at(koral_in_list+2)->getType() == BKS45Type) {
-                        k3 = koral_list.at(koral_in_list+2);
+                    avroraSensor.setData(2,k2->getValue1());
+                    avroraSensor.setData(3,k2->getValue2());
+                    if(sensorList.at(sensor_in_list+2)->getType() == BKS16Type2) {
+                        k3 = sensorList.at(sensor_in_list+2);
                         k3->step();
                         err.array[1] = ((k3->getErr() & 0x0F) << 4) | (k3->getStat() & 0x0F);
-                        koralpack.setData(4,k3->getValue1());
-                        koralpack.setData(5,k3->getValue2());
-                        if(koral_list.at(koral_in_list+3)->getType() == BKS67Type) {
-                            k4 = koral_list.at(koral_in_list+3);
+                        avroraSensor.setData(4,k3->getValue1());
+                        avroraSensor.setData(5,k3->getValue2());
+                        if(sensorList.at(sensor_in_list+3)->getType() == BKS16Type3) {
+                            k4 = sensorList.at(sensor_in_list+3);
                             k4->step();
                             err.array[0] = ((k4->getErr() & 0x0F) << 4) | (k4->getStat() & 0x0F);
-                            koralpack.setData(6,k4->getValue1());
-                            koralpack.setData(7,k4->getValue2());
-                            if(koral_list.at(koral_in_list+4)->getType() == BKS89Type) {
-                                k5 = koral_list.at(koral_in_list+4);
+                            avroraSensor.setData(6,k4->getValue1());
+                            avroraSensor.setData(7,k4->getValue2());
+                            if(sensorList.at(sensor_in_list+4)->getType() == BKS16Type4) {
+                                k5 = sensorList.at(sensor_in_list+4);
                                 k5->step();
-                                koralpack.setData(8,k5->getValue1());
-                                koralpack.setData(9,k5->getValue2());
+                                avroraSensor.setData(8,k5->getValue1());
+                                avroraSensor.setData(9,k5->getValue2());
                             }
                         }
                     }
                 }
-                koralpack.setErrArray(err.idata);
-                ok = koralpack.makeAnswer(BKS01Type);
+                avroraSensor.setErr32(err.idata);
+                ok = avroraSensor.makeAnswer(BKS16Type);
             }
         }
         // проверка на корректно сформированный пакет ответа
@@ -268,13 +293,13 @@ void MainWindow::serialReceive(QByteArray pck)
             return;
         };
         // передать пакет на посылку
-        MainWindow::serialSend(koralpack.getPack());
-        QString pckStr = static_cast<QString>(koralpack.getPack().toHex()).toUpper();
+        MainWindow::serialSend(avroraSensor.getPack());
+        QString pckStr = static_cast<QString>(avroraSensor.getPack().toHex()).toUpper();
         if(ui->groupBox->isChecked())
         {                                  //ui->teInputData->insertHtml(QString(" - <font color = ""green"">[%1: %2] %3 <b>%4</b> %5</font>\n")
             logOutStr += QString(" - <font color = ""green"">[%1: %2] %3 <b>%4</b> %5</font>")
-                                    .arg(QString::number(koral_in_list+1))
-                                    .arg(koral_list.at(koral_in_list)->getName())
+                                    .arg(QString::number(sensor_in_list+1))
+                                    .arg(sensorList.at(sensor_in_list)->getName())
                                     .arg(pckStr.left(10))
                                     .arg(pckStr.mid(10, pckStr.length() - 18))
                                     .arg(pckStr.right(8));
@@ -333,7 +358,23 @@ void MainWindow::on_pbSend_clicked()
     if(com->isOpened())
     {
         QByteArray hex = QByteArray::fromHex(str);
-        ui->statusBar->showMessage("Отправка: " + hex.toHex().toUpper(), 1000);
+        QString logOutStr =  hex.toHex().toUpper();
+        ui->statusBar->showMessage("Отправка пакета: " + logOutStr, 1000);
+        if(ui->groupBox->isChecked()) {
+            if(logOutStr.length() >= 10) {
+                logOutStr = QString("%1 - <font color = ""green"">Отправка: %2 <b>%3</b> %4</font>")
+                                        .arg(QTime::currentTime().toString("HH:mm:ss.zzz "))
+                                        .arg(logOutStr.left(2))
+                                        .arg(logOutStr.mid(2, logOutStr.length() - 10))
+                                        .arg(logOutStr.right(8));
+
+            } else {
+                logOutStr = QString("%1 - <font color = ""green"">Отправка: %2 </font>")
+                                        .arg(QTime::currentTime().toString("HH:mm:ss.zzz "))
+                                        .arg(logOutStr);
+            }
+            ui->teInputData->append(logOutStr);
+        }
         MainWindow::serialSend(hex);
     }
     else
@@ -361,7 +402,7 @@ void MainWindow::on_pbCalcCRC_clicked()
 
 //    QString strtext = pck.toHex().toUpper();
 
-    cKoral::combineAnswer(pck);
+    AvroraSensor::combineAnswer(pck);
 
     QString strholder = pck.toHex().toUpper();
     for (int i = strholder.length()-2; i > 1; i-=2)
@@ -376,62 +417,74 @@ void MainWindow::on_pbCalcCRC_clicked()
 
 void MainWindow::on_pbPlus_clicked()
 {
-    if(koral_list.length() == 0)
+    if(sensorList.length() == 0)
     {
         ui->lFirstSet->deleteLater();
-        koral_list.append(new cKoralSetting(1, tSensorType::KorallType, 1));
+        sensorList.append(new SensorSettings(1, tSensorType::KorallType, 1));
     }
      else
-        switch(koral_list.at(koral_list.length()-1)->getType()){
+        switch(sensorList.at(sensorList.length()-1)->getType()){
         case KorallPlusType:
-            koral_list.append(new cKoralSetting(koral_list.length()+1, PlusMassType, koral_list.at(koral_list.length()-1)->getAddr()));
-            koral_list.at(koral_list.length()-1)->setFixedType();
-            koral_list.at(koral_list.length()-1)->setFixedState();
-            ui->vLayout->addWidget(koral_list.last());
-            koral_list.append(new cKoralSetting(koral_list.length()+1, PlusVibroType, koral_list.at(koral_list.length()-1)->getAddr()));
-            koral_list.at(koral_list.length()-1)->setFixedType();
-            koral_list.at(koral_list.length()-1)->setFixedState();
+            sensorList.append(new SensorSettings(sensorList.length()+1, KorallPlusType1, sensorList.at(sensorList.length()-1)->getAddr()));
+            sensorList.at(sensorList.length()-1)->setFixedType();
+            sensorList.at(sensorList.length()-1)->setFixedState();
+            ui->vLayout->addWidget(sensorList.last());
+            sensorList.append(new SensorSettings(sensorList.length()+1, KorallPlusType2, sensorList.at(sensorList.length()-1)->getAddr()));
+            sensorList.at(sensorList.length()-1)->setFixedType();
+            sensorList.at(sensorList.length()-1)->setFixedState();
             break;
-        case PlusVibroType:
-            koral_list.append(new cKoralSetting(koral_list.length()+1, KorallPlusType, koral_list.at(koral_list.length()-1)->getAddr() + 1)); break;
-        case BKS01Type:
-            koral_list.append(new cKoralSetting(koral_list.length()+1, BKS23Type, koral_list.at(koral_list.length()-1)->getAddr()));
-            koral_list.at(koral_list.length()-1)->setFixedType();
-            ui->vLayout->addWidget(koral_list.last());
-            koral_list.append(new cKoralSetting(koral_list.length()+1, BKS45Type, koral_list.at(koral_list.length()-1)->getAddr()));
-            koral_list.at(koral_list.length()-1)->setFixedType();
-            ui->vLayout->addWidget(koral_list.last());
-            koral_list.append(new cKoralSetting(koral_list.length()+1, BKS67Type, koral_list.at(koral_list.length()-1)->getAddr()));
-            koral_list.at(koral_list.length()-1)->setFixedType();
-            ui->vLayout->addWidget(koral_list.last());
-            koral_list.append(new cKoralSetting(koral_list.length()+1, BKS89Type, koral_list.at(koral_list.length()-1)->getAddr()));
-            koral_list.at(koral_list.length()-1)->setFixedType();
-            koral_list.at(koral_list.length()-1)->setFixedState();
+        case KorallPlusType2:
+            sensorList.append(new SensorSettings(sensorList.length()+1, KorallPlusType, sensorList.at(sensorList.length()-1)->getAddr() + 1)); break;
+        case BKS14Type:
+            sensorList.append(new SensorSettings(sensorList.length()+1, BKS14Type1, sensorList.at(sensorList.length()-1)->getAddr()));
+            sensorList.at(sensorList.length()-1)->setFixedType();
+            ui->vLayout->addWidget(sensorList.last());
+            sensorList.append(new SensorSettings(sensorList.length()+1, BKS14Type2, sensorList.at(sensorList.length()-1)->getAddr()));
+            sensorList.at(sensorList.length()-1)->setFixedType();
             break;
-        case BKS89Type:
-            koral_list.append(new cKoralSetting(koral_list.length()+1, BKS01Type, koral_list.at(koral_list.length()-1)->getAddr() + 1)); break;
+        case BKS14Type2:
+            sensorList.append(new SensorSettings(sensorList.length()+1, BKS14Type, sensorList.at(sensorList.length()-1)->getAddr() + 1)); break;
+        case BKS16Type:
+            sensorList.append(new SensorSettings(sensorList.length()+1, BKS16Type1, sensorList.at(sensorList.length()-1)->getAddr()));
+            sensorList.at(sensorList.length()-1)->setFixedType();
+            ui->vLayout->addWidget(sensorList.last());
+            sensorList.append(new SensorSettings(sensorList.length()+1, BKS16Type2, sensorList.at(sensorList.length()-1)->getAddr()));
+            sensorList.at(sensorList.length()-1)->setFixedType();
+            ui->vLayout->addWidget(sensorList.last());
+            sensorList.append(new SensorSettings(sensorList.length()+1, BKS16Type3, sensorList.at(sensorList.length()-1)->getAddr()));
+            sensorList.at(sensorList.length()-1)->setFixedType();
+            ui->vLayout->addWidget(sensorList.last());
+            sensorList.append(new SensorSettings(sensorList.length()+1, BKS16Type4, sensorList.at(sensorList.length()-1)->getAddr()));
+            sensorList.at(sensorList.length()-1)->setFixedType();
+            sensorList.at(sensorList.length()-1)->setFixedState();
+            break;
+        case BKS16Type4:
+            sensorList.append(new SensorSettings(sensorList.length()+1, BKS16Type, sensorList.at(sensorList.length()-1)->getAddr() + 1)); break;
         default:
-            koral_list.append(new cKoralSetting(koral_list.length()+1, koral_list.at(koral_list.length()-1)->getType(), koral_list.at(koral_list.length()-1)->getAddr() + 1));
+            sensorList.append(new SensorSettings(sensorList.length()+1, sensorList.at(sensorList.length()-1)->getType(), sensorList.at(sensorList.length()-1)->getAddr() + 1));
         }
-    ui->vLayout->addWidget(koral_list.last());
+    ui->vLayout->addWidget(sensorList.last());
 }
 
 void MainWindow::on_pbMinus_clicked()
 {
-    if(koral_list.length() > 1)
+    if(sensorList.length() > 1)
     {   // !!! здесь сквозной CASE. Выполнение операций последовательно начиная с совпадения!!!
-        switch(koral_list.last()->getType()){
-        case BKS89Type:
-            delete koral_list.last();
-            koral_list.pop_back();
-            delete koral_list.last();
-            koral_list.pop_back();
-        case PlusVibroType:
-            delete koral_list.last();
-            koral_list.pop_back();
+        switch(sensorList.last()->getType()){
+        case BKS16Type4:
+            delete sensorList.last();
+            sensorList.pop_back();
+            delete sensorList.last();
+            sensorList.pop_back();
+        case BKS14Type2:
+            delete sensorList.last();
+            sensorList.pop_back();
+        case KorallPlusType2:
+            delete sensorList.last();
+            sensorList.pop_back();
         default:
-            delete koral_list.last();
-            koral_list.pop_back();
+            delete sensorList.last();
+            sensorList.pop_back();
         }
     }
 }
@@ -455,7 +508,7 @@ void MainWindow::contextMenuRequested(QPoint point)
     // объявление и инициализация конеткстного меню
     QMenu * menu = ui->leOutputData->createStandardContextMenu(); //new QMenu(ui->leOutputData->window());
     // создание нового действия
-    QAction * act_copy = new QAction(QIcon(":/images/copy.ico"), tr("Копировать"), menu->parent());
+    QAction * act_copy = new QAction(QIcon(":/images/copy.png"), tr("Копировать"), menu->parent());
     // описание сочетания клавиш (только лишь?)
     act_copy->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
     // соединение действия с функцией копирования в буфер обмена
@@ -501,12 +554,13 @@ void MainWindow::on_pbSave_clicked()
 {
     QString str = QFileDialog::getSaveFileName(0, tr("Сохранить установки в файле"), QCoreApplication::applicationDirPath(), "*.ini Файл настройки");
     if (str == "") return;
-    if (!koral_list.length())
+    if (!sensorList.length())
     {
         QMessageBox::information(this, "Отмена сохранения", "Необходимо настроить хотя бы один датчик", QDialogButtonBox::StandardButton::Ok);
     }
     if (str.right(4) != ".ini") str += ".ini";
     QSettings settings(str, QSettings::IniFormat);
+    settings.setIniCodec("Windows-1251");
 // сведения о программе и настройке (при загрузке не используется)
     settings.setValue("About/Program", PROGRAM_NAME);
     settings.setValue("About/Version", VERSION_NAME);
@@ -522,7 +576,7 @@ void MainWindow::on_pbSave_clicked()
     settings.setValue("General/OutputMess", ui->leOutputData->placeholderText());
 // запись параметров для каждого из датчиков
     quint8 i = 0;
-    foreach(cKoralSetting * sensor, koral_list)
+    foreach(SensorSettings * sensor, sensorList)
     {
         ++i;
         settings.beginGroup("Sensor" + QString::number(i));
@@ -550,7 +604,10 @@ void MainWindow::on_pbLoad_clicked()
     QString str = QFileDialog::getOpenFileName(0, tr("Загрузить файл установок"), QCoreApplication::applicationDirPath(), "*.ini Файл настройки;;*.* Все файлы");
     if (str == "") return;
     QSettings settings(str, QSettings::IniFormat);
+    settings.setIniCodec("Windows-1251");
 // загрузка настроек для главного окна
+    QString vers = settings.value("About/Version").toString();
+    if (vers != VERSION_NAME) {QMessageBox::warning(this, tr("Загрузка конфигурации"), tr("ВНИМАНИЕ! Версия файла не совпадает с версией программы.\n\n Загруженная конфигурация может не совпадать с реальной!"));}
     ui->cbPort->setCurrentIndex(ui->cbPort->findText(settings.value("General/COM").toString()));
     ui->cbBitRate->setCurrentIndex(ui->cbBitRate->findText(settings.value("General/Bitrate").toString()));
     ui->groupBox->setChecked(settings.value("General/Print").toBool());
@@ -558,7 +615,7 @@ void MainWindow::on_pbLoad_clicked()
     ui->leOutputData->setText(settings.value("General/OutputData").toString());
     ui->leOutputData->setPlaceholderText(settings.value("General/OutputMess").toString());
 // удалить предыдущие датчики
-    while(koral_list.length() > 1)
+    while(sensorList.length() > 1)
         MainWindow::on_pbMinus_clicked();
 // загрузка настроек для каждого из датчиков
     quint8 i = 0;
@@ -566,22 +623,22 @@ void MainWindow::on_pbLoad_clicked()
     {
         settings.beginGroup("Sensor" + QString::number(i));
         // если датчика ещё не существует в списке, создать
-        if(koral_list.length() < i)
+        if(sensorList.length() < i)
             MainWindow::on_pbPlus_clicked();
-        koral_list.at(i-1)->setType(settings.value("Type").toInt());
-        koral_list.at(i-1)->setAddr(settings.value("Address").toInt());
-        koral_list.at(i-1)->setAddrName(settings.value("AddressName", "Адрес").toString().replace("^3", "³").replace("^2", "²"));
-        koral_list.at(i-1)->setValue1(settings.value("Value1").toFloat());
-        koral_list.at(i-1)->setValue1Name(settings.value("Value1Name", "Параметр 1").toString().replace("^3", "³").replace("^2", "²"));
-        koral_list.at(i-1)->setValue2(settings.value("Value2").toFloat());
-        koral_list.at(i-1)->setValue2Name(settings.value("Value2Name", "Параметр 2").toString().replace("^3", "³").replace("^2", "²"));
-        koral_list.at(i-1)->setInc1(settings.value("Increment1").toFloat());
-        koral_list.at(i-1)->setInc2(settings.value("Increment2").toFloat());
-        koral_list.at(i-1)->setRnd1(settings.value("RandomFlag1", true).toBool());
-        koral_list.at(i-1)->setRnd2(settings.value("RandomFlag2", true).toBool());
-        koral_list.at(i-1)->setFlagsName(settings.value("FlagsName", "Состояние:").toString().replace("^3", "³").replace("^2", "²"));
-        koral_list.at(i-1)->setStat(settings.value("Status").toInt());
-        koral_list.at(i-1)->setErr(settings.value("Error").toInt());
+        sensorList.at(i-1)->setType(settings.value("Type").toInt());
+        sensorList.at(i-1)->setAddr(settings.value("Address").toInt());
+        sensorList.at(i-1)->setAddrName(settings.value("AddressName", "Адрес").toString().replace("^3", "³").replace("^2", "²"));
+        sensorList.at(i-1)->setValue1(settings.value("Value1").toFloat());
+        sensorList.at(i-1)->setValue1Name(settings.value("Value1Name", "Параметр 1").toString().replace("^3", "³").replace("^2", "²"));
+        sensorList.at(i-1)->setValue2(settings.value("Value2").toFloat());
+        sensorList.at(i-1)->setValue2Name(settings.value("Value2Name", "Параметр 2").toString().replace("^3", "³").replace("^2", "²"));
+        sensorList.at(i-1)->setInc1(settings.value("Increment1").toFloat());
+        sensorList.at(i-1)->setInc2(settings.value("Increment2").toFloat());
+        sensorList.at(i-1)->setRnd1(settings.value("RandomFlag1", true).toBool());
+        sensorList.at(i-1)->setRnd2(settings.value("RandomFlag2", true).toBool());
+        sensorList.at(i-1)->setFlagsName(settings.value("FlagsName", "Состояние:").toString().replace("^3", "³").replace("^2", "²"));
+        sensorList.at(i-1)->setStat(settings.value("Status").toInt());
+        sensorList.at(i-1)->setErr(settings.value("Error").toInt());
         settings.endGroup();
     }
     str = "Загрузка установок из файла " + str + " прошла успешно";

@@ -1,6 +1,6 @@
-#include "koralsetting.h"
+#include "sensorsettings.h"
 
-cKoralSetting::cKoralSetting(QWidget *parent) : QWidget(parent)
+SensorSettings::SensorSettings(QWidget *parent) : QWidget(parent)
 {
     verLayout = new QVBoxLayout(this);
     verLayout->setSpacing(0);
@@ -28,7 +28,7 @@ cKoralSetting::cKoralSetting(QWidget *parent) : QWidget(parent)
     spinBoxAddress = new QSpinBox(backwidget);
     spinBoxAddress->setFixedSize(QSize(40, 20));
     spinBoxAddress->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
-    spinBoxAddress->setMaximum(63);
+    spinBoxAddress->setMaximum(255);
     horLayout->addWidget(spinBoxAddress);
 
     comboBoxType = new QComboBox(backwidget);
@@ -37,12 +37,14 @@ cKoralSetting::cKoralSetting(QWidget *parent) : QWidget(parent)
     for (int i = 0; i < tSensorType::NumOfTypes; ++i)
         comboBoxType->addItem(QIcon(SensorsImage[i]), SensorsName[i]);
     QStandardItemModel* model = (QStandardItemModel*) comboBoxType->model();
-    model->item(tSensorType::PlusMassType)->setEnabled(false);
-    model->item(tSensorType::PlusVibroType)->setEnabled(false);
-    model->item(tSensorType::BKS23Type)->setEnabled(false);
-    model->item(tSensorType::BKS45Type)->setEnabled(false);
-    model->item(tSensorType::BKS67Type)->setEnabled(false);
-    model->item(tSensorType::BKS89Type)->setEnabled(false);
+    model->item(tSensorType::KorallPlusType1)->setEnabled(false);
+    model->item(tSensorType::KorallPlusType2)->setEnabled(false);
+    model->item(tSensorType::BKS14Type1)->setEnabled(false);
+    model->item(tSensorType::BKS14Type2)->setEnabled(false);
+    model->item(tSensorType::BKS16Type1)->setEnabled(false);
+    model->item(tSensorType::BKS16Type2)->setEnabled(false);
+    model->item(tSensorType::BKS16Type3)->setEnabled(false);
+    model->item(tSensorType::BKS16Type4)->setEnabled(false);
     comboBoxType->setCurrentIndex(tSensorType::KorallType);
     horLayout->addWidget(comboBoxType);
 
@@ -132,16 +134,16 @@ cKoralSetting::cKoralSetting(QWidget *parent) : QWidget(parent)
 
     lNum->setText(tr("1:"));
     leAddress->setText(tr("Адрес"));
-    leValue1->setText(tr("Параметр 1"));
-    leValue2->setText(tr("Параметр 2"));
-    leFlags->setText(tr("Состояние:"));
-
-    comboBoxType->setStatusTip("Тип датчика. Для 'Коралла-8' с поключённым 'Вибро-1' использовать тип 'Коралл+', '+ массметр', '+ Вибро' с одинаковыми адресами" );
-    spinBoxAddress->setStatusTip("Адрес датчика (0..31)");
+    comboBoxType->setStatusTip("Тип датчика." );
+    spinBoxAddress->setStatusTip("Адрес датчика");
     checkBoxRnd1->setStatusTip("Флаг режима случайного изменения параметра 1 { -приращение | 0 | +приращение }");
     checkBoxRnd2->setStatusTip("Флаг режима случайного изменения параметра 2 { -приращение | 0 | +приращение }");
-    dSpinBoxValue1->setStatusTip(SensorHint[0][0]);
-    dSpinBoxValue2->setStatusTip(SensorHint[0][1]);
+    comboBoxType->setStatusTip(SensorHint[0][0]);
+    leValue1->setText(SensorHint[0][1]);
+    dSpinBoxValue1->setStatusTip(SensorHint[0][2]);
+    leValue1->setText(SensorHint[0][3]);
+    dSpinBoxValue2->setStatusTip(SensorHint[0][4]);
+    leFlags->setText(SensorHint[0][5]);
 //    dSpinBoxValue3->setStatusTip(tr("Значение третьего параметра (измеренное значение массового расхода)"));
 //    dSpinBoxValue4->setStatusTip(tr("Значение четвёртого параметра (измеренное значение массы)"));
 //    dSpinBoxValue5->setStatusTip(tr("Значение пятого параметра (измеренное значение плотности)"));
@@ -167,19 +169,25 @@ cKoralSetting::cKoralSetting(QWidget *parent) : QWidget(parent)
     this->setMouseTracking(true);
 }
 
-void cKoralSetting::setType(int type)
+void SensorSettings::setType(int type)
 {
     _type = static_cast<tSensorType>(type);
     comboBoxType->setCurrentIndex(static_cast<int>(_type));
-    dSpinBoxValue1->setStatusTip(SensorHint[_type][0]);
-    dSpinBoxValue2->setStatusTip(SensorHint[_type][1]);
-    spinBoxErr->setToolTip(SensorHint[_type][2]);
-    spinBoxStat->setToolTip(SensorHint[_type][3]);
+    comboBoxType->setStatusTip(SensorHint[_type][0]);
+    leValue1->setText(SensorHint[_type][1]);
+    dSpinBoxValue1->setStatusTip(SensorHint[_type][2]);
+    leValue2->setText(SensorHint[_type][3]);
+    dSpinBoxValue2->setStatusTip(SensorHint[_type][4]);
+    leFlags->setText(SensorHint[_type][5]);
+    spinBoxErr->setStatusTip(SensorHint[_type][6]);
+    spinBoxStat->setStatusTip(SensorHint[_type][7]);
+    spinBoxErr->setToolTip(SensorHint[_type][6]);
+    spinBoxStat->setToolTip(SensorHint[_type][7]);
     spinBoxErr->setMaximum(errStatMaxValues[_type][0]);
     spinBoxStat->setMaximum(errStatMaxValues[_type][1]);
 }
 
-void cKoralSetting::blink(int interval, QColor col)
+void SensorSettings::blink(int interval, QColor col)
 {
     QPalette pal = spinBoxAddress->palette();
     pal.setColor(QPalette::Base, col);
@@ -187,7 +195,7 @@ void cKoralSetting::blink(int interval, QColor col)
     QTimer::singleShot(interval, this, SLOT(restoreFromBlink()));
 }
 
-void cKoralSetting::mouseMoveEvent(QMouseEvent *event)
+void SensorSettings::mouseMoveEvent(QMouseEvent *event)
 {
     Q_UNUSED(event);
 //    QPalette pal = spinBoxStat->palette();

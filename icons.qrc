@@ -12,6 +12,9 @@
         <file>images/sensor_7.png</file>
         <file>images/sensor_8.png</file>
         <file>images/clear.png</file>
-        <file>images/copy.ico</file>
+        <file>images/copy.png</file>
+        <file>images/minus.png</file>
+        <file>images/plus.png</file>
+        <file>images/send.png</file>
     </qresource>
 </RCC>

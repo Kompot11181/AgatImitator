@@ -12,8 +12,8 @@
 #include <QProcess>
 #include <QDebug>
 #include "sg_comport.h"
-#include "koral.h"
-#include "koralsetting.h"
+#include "avrorasensor.h"
+#include "sensorsettings.h"
 
 namespace Ui {
 class MainWindow;

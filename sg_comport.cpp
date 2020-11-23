@@ -72,6 +72,7 @@ QStringList SgComPort::getComList()
         res.append(com_name);
     }
 #endif
+    res.sort();
     return res;
 }
 //==================================================
