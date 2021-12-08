@@ -104,21 +104,21 @@ private:
     } SensorList;
 
     const SensorList sensorsList[SensorsCount] = {
-        { ":/images/sensor_2.png", tr(" Коралл-8"),  true  },
-        { ":/images/sensor_4.png", tr(" Гиацинт-У"), true  },
-        { ":/images/sensor_1.png", tr(" Вибро-1"),   true  },
-        { ":/images/sensor_3.png", tr(" КРУ-1"),     true  },
-        { ":/images/sensor_7.png", tr(" Коралл+"),   true  },
-        { "",                      tr("+ массметр+"),false },
-        { "",                      tr("+ Вибро"),    false },
-        { ":/images/sensor_8.png", tr("  БКС14 +"),  true  },
-        { "",                      tr("+ БКС14 +"),  false },
-        { "",                      tr("+ БКС14  "),  false },
-        { ":/images/sensor_8.png", tr("  БКС16 +"),  true  },
-        { "",                      tr("+ БКС16 +"),  false },
-        { "",                      tr("+ БКС16 +"),  false },
-        { "",                      tr("+ БКС16 +"),  false },
-        { "",                      tr("+ БКС16  "),  false }
+        { ":/images/sensor_2.png", tr(" Коралл-8"),   false }, //true  },
+        { ":/images/sensor_4.png", tr(" Гиацинт-У"),  false }, //true  },
+        { ":/images/sensor_1.png", tr(" Вибро-1"),    false }, //true  },
+        { ":/images/sensor_3.png", tr(" КРУ-1"),      true  }, //true  },
+        { ":/images/sensor_7.png", tr(" Коралл+"),    false }, //true  },
+        { "",                      tr("+ массметр+"), false }, //false },
+        { "",                      tr("+ Вибро"),     false }, //false },
+        { ":/images/sensor_8.png", tr("  БКС14 +"),   false }, //true  },
+        { "",                      tr("+ БКС14 +"),   false }, //false },
+        { "",                      tr("+ БКС14  "),   false }, //false },
+        { ":/images/sensor_8.png", tr("  БКС16 +"),   false }, //true  },
+        { "",                      tr("+ БКС16 +"),   false }, //false },
+        { "",                      tr("+ БКС16 +"),   false }, //false },
+        { "",                      tr("+ БКС16 +"),   false }, //false },
+        { "",                      tr("+ БКС16  "),   false }  //false }
     };
 
 

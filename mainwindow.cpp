@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 
 #define PROGRAM_NAME "AGAT-Imitator"
-#define VERSION_NAME "v.0.98"
+#define VERSION_NAME "v.0.98 (ограничение для КРУ-1)"
 #define PROG_DATE __DATE__
 #define PROG_TIME  __TIME__
 
