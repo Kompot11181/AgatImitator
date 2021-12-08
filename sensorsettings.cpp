@@ -32,20 +32,14 @@ SensorSettings::SensorSettings(QWidget *parent) : QWidget(parent)
     horLayout->addWidget(spinBoxAddress);
 
     comboBoxType = new QComboBox(backwidget);
-    comboBoxType->setFixedSize(100, 20);
+    comboBoxType->setFixedSize(110, 20);
     comboBoxType->setMaxCount(SensorsCount);
-    for (int i = 0; i < tSensorType::NumOfTypes; ++i)
-        comboBoxType->addItem(QIcon(SensorsImage[i]), SensorsName[i]);
     QStandardItemModel* model = (QStandardItemModel*) comboBoxType->model();
-    model->item(tSensorType::KorallPlusType1)->setEnabled(false);
-    model->item(tSensorType::KorallPlusType2)->setEnabled(false);
-    model->item(tSensorType::BKS14Type1)->setEnabled(false);
-    model->item(tSensorType::BKS14Type2)->setEnabled(false);
-    model->item(tSensorType::BKS16Type1)->setEnabled(false);
-    model->item(tSensorType::BKS16Type2)->setEnabled(false);
-    model->item(tSensorType::BKS16Type3)->setEnabled(false);
-    model->item(tSensorType::BKS16Type4)->setEnabled(false);
-    comboBoxType->setCurrentIndex(tSensorType::KorallType);
+    for (int i = 0; i < tSensorSettingsType::NumOfTypes; ++i) {
+        comboBoxType->addItem(QIcon(sensorsList[i].image), sensorsList[i].name);
+        model->item(i)->setEnabled(sensorsList[i].enabled);
+    }
+    comboBoxType->setCurrentIndex(tSensorSettingsType::KRUType);
     horLayout->addWidget(comboBoxType);
 
     leValue1 = new QLineEdit(backwidget);
@@ -171,7 +165,7 @@ SensorSettings::SensorSettings(QWidget *parent) : QWidget(parent)
 
 void SensorSettings::setType(int type)
 {
-    _type = static_cast<tSensorType>(type);
+    _type = static_cast<tSensorSettingsType>(type);
     comboBoxType->setCurrentIndex(static_cast<int>(_type));
     comboBoxType->setStatusTip(SensorHint[_type][0]);
     leValue1->setText(SensorHint[_type][1]);

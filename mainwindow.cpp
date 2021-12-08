@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 
 #define PROGRAM_NAME "AGAT-Imitator"
-#define VERSION_NAME "v.0.95"
+#define VERSION_NAME "v.0.98"
 #define PROG_DATE __DATE__
 #define PROG_TIME  __TIME__
 
@@ -170,6 +170,8 @@ void MainWindow::serialReceive(QByteArray pck)
             if(ui->groupBox->isChecked()) ui->teInputData->append(logOutStr);
             return;
         }
+
+/*
         // проверка на команду датчику
         if ((avroraSensor.getCmd() <= 0) &&(avroraSensor.getCmd() >= koralCmdConst::MaxNumOfCommands))
         {
@@ -180,7 +182,7 @@ void MainWindow::serialReceive(QByteArray pck)
             if(ui->groupBox->isChecked()) ui->teInputData->append(logOutStr);
             return;
         }
-
+*/
         // индикация посылки (светло-зелёный цвет)
         sensorList.at(sensor_in_list)->blink(100, QColor(230, 255, 240));
 
@@ -208,12 +210,12 @@ void MainWindow::serialReceive(QByteArray pck)
             // для Коралл+Вибро взять и изменить значения для виртуальных датчиков
             if (sensorList.at(sensor_in_list)->getType() == KorallPlusType) {
                 SensorSettings *k2, *k3;
-                if(sensorList.at(sensor_in_list+1)->getType() == KorallPlusType1) {
+                if((sensorList.count() > (sensor_in_list+1)) && (sensorList.at(sensor_in_list+1)->getType() == KorallPlusType1)) {
                     k2 = sensorList.at(sensor_in_list+1);
                     k2->step();
                     avroraSensor.setData(2,k2->getValue1());
                     avroraSensor.setData(3,k2->getValue2());
-                    if(sensorList.at(sensor_in_list+2)->getType() == KorallPlusType2) {
+                    if((sensorList.count() > (sensor_in_list+2)) && (sensorList.at(sensor_in_list+2)->getType() == KorallPlusType2)) {
                         k3 = sensorList.at(sensor_in_list+2);
                         k3->step();
                         avroraSensor.setData(4,k3->getValue1());
@@ -227,14 +229,14 @@ void MainWindow::serialReceive(QByteArray pck)
                 SensorSettings *k2, *k3;
                 avroraSensor.setStatArray(0, sensorList.at(sensor_in_list)->getErr());
                 avroraSensor.setStatArray(1, sensorList.at(sensor_in_list)->getStat());
-                if(sensorList.at(sensor_in_list+1)->getType() == BKS14Type1) {
+                if((sensorList.count() > (sensor_in_list+1)) && (sensorList.at(sensor_in_list+1)->getType() == BKS14Type1)) {
                     k2 = sensorList.at(sensor_in_list+1);
                     k2->step();
                     avroraSensor.setData(2,k2->getValue1());
                     avroraSensor.setStatArray(2, k2->getErr());
                     avroraSensor.setData(3,k2->getValue2());
                     avroraSensor.setStatArray(3, k2->getStat());
-                    if(sensorList.at(sensor_in_list+2)->getType() == BKS14Type2) {
+                    if((sensorList.count() > (sensor_in_list+2)) && (sensorList.at(sensor_in_list+2)->getType() == BKS14Type2)) {
                         k3 = sensorList.at(sensor_in_list+2);
                         k3->step();
                         avroraSensor.setData(4,k3->getValue1());
@@ -251,25 +253,25 @@ void MainWindow::serialReceive(QByteArray pck)
                 SensorSettings *k2, *k3, *k4, *k5;
                 AvroraChannel err; err.idata = 0;
                 err.array[3] = sensorList.at(sensor_in_list)->getErr();
-                if(sensorList.at(sensor_in_list+1)->getType() == BKS16Type1) {
+                if((sensorList.count() > (sensor_in_list+1)) && (sensorList.at(sensor_in_list+1)->getType() == BKS16Type1)) {
                     k2 = sensorList.at(sensor_in_list+1);
                     k2->step();
                     err.array[2] = ((k2->getErr() & 0x0F) << 4) | (k2->getStat() & 0x0F);
                     avroraSensor.setData(2,k2->getValue1());
                     avroraSensor.setData(3,k2->getValue2());
-                    if(sensorList.at(sensor_in_list+2)->getType() == BKS16Type2) {
+                    if((sensorList.count() > (sensor_in_list+2)) && (sensorList.at(sensor_in_list+2)->getType() == BKS16Type2)) {
                         k3 = sensorList.at(sensor_in_list+2);
                         k3->step();
                         err.array[1] = ((k3->getErr() & 0x0F) << 4) | (k3->getStat() & 0x0F);
                         avroraSensor.setData(4,k3->getValue1());
                         avroraSensor.setData(5,k3->getValue2());
-                        if(sensorList.at(sensor_in_list+3)->getType() == BKS16Type3) {
+                        if((sensorList.count() > (sensor_in_list+3)) && (sensorList.at(sensor_in_list+3)->getType() == BKS16Type3)) {
                             k4 = sensorList.at(sensor_in_list+3);
                             k4->step();
                             err.array[0] = ((k4->getErr() & 0x0F) << 4) | (k4->getStat() & 0x0F);
                             avroraSensor.setData(6,k4->getValue1());
                             avroraSensor.setData(7,k4->getValue2());
-                            if(sensorList.at(sensor_in_list+4)->getType() == BKS16Type4) {
+                            if((sensorList.count() > (sensor_in_list+4)) && (sensorList.at(sensor_in_list+4)->getType() == BKS16Type4)) {
                                 k5 = sensorList.at(sensor_in_list+4);
                                 k5->step();
                                 avroraSensor.setData(8,k5->getValue1());
@@ -420,7 +422,7 @@ void MainWindow::on_pbPlus_clicked()
     if(sensorList.length() == 0)
     {
         ui->lFirstSet->deleteLater();
-        sensorList.append(new SensorSettings(1, tSensorType::KorallType, 1));
+        sensorList.append(new SensorSettings(1, tSensorSettingsType::KRUType, 1));
     }
      else
         switch(sensorList.at(sensorList.length()-1)->getType()){
@@ -469,7 +471,8 @@ void MainWindow::on_pbPlus_clicked()
 void MainWindow::on_pbMinus_clicked()
 {
     if(sensorList.length() > 1)
-    {   // !!! здесь сквозной CASE. Выполнение операций последовательно начиная с совпадения!!!
+    {
+//// !!! здесь сквозной CASE. Выполнение операций последовательно начиная с совпадения!!!
         switch(sensorList.last()->getType()){
         case BKS16Type4:
             delete sensorList.last();
@@ -477,8 +480,6 @@ void MainWindow::on_pbMinus_clicked()
             delete sensorList.last();
             sensorList.pop_back();
         case BKS14Type2:
-            delete sensorList.last();
-            sensorList.pop_back();
         case KorallPlusType2:
             delete sensorList.last();
             sensorList.pop_back();

@@ -91,24 +91,41 @@ bool AvroraSensor::updateCMDPack(QByteArray pck)
     return true;
 }
 
-bool AvroraSensor::makeAnswer(tSensorType type)
+bool AvroraSensor::makeAnswer(tSensorSettingsType type)
 {
     _packarray.clear();
     switch(type){
-        case KorallType: {
-            // формируем заголовок пакета:
-            _packarray.append(_pack.dstByte)
-                .append(_pack.srcByte)
-                .append(AvroraConst::SCT)
-                .append(_pack.cmdByte);
-            // формируем поле данных
-            for(int i = 0; i < 3; ++i)
-                _packarray.append(_pack.chnl[i].array[3]).append(_pack.chnl[i].array[2])
-                .append(_pack.chnl[i].array[1]).append(_pack.chnl[i].array[0]);
-            _packarray.append(_pack.errorByte)
-                    .append(_pack.statusByte)
-                    .append(_pack.emptyByte);
-            break; }
+    case HyacinthType: {
+        // формируем заголовок пакета:
+        _packarray.append(_pack.dstByte)
+            .append(_pack.srcByte)
+            .append(AvroraConst::SCT)
+            .append(_pack.cmdByte);
+        // формируем поле данных
+        switch (_pack.cmdByte) {
+        case 0x01:
+            _packarray.append(_pack.chnl[0].array[3]).append(_pack.chnl[0].array[2])
+                      .append(_pack.chnl[0].array[1]).append(_pack.chnl[0].array[0]);
+            _packarray.append('\x0').append('\x0').append('\x0').append('\x0');
+            _packarray.append('\x0').append('\x0').append('\x0').append('\x0');
+            _packarray.append(_pack.errorByte).append(_pack.emptyByte);
+            break;
+        case 0x05:
+            AvroraChannel ctrl;
+            ctrl.fdata = (_pack.errorByte) ? (_pack.chnl[0].fdata) : (_pack.chnl[0].fdata / 2.0);
+            _packarray.append(ctrl.array[3]).append(ctrl.array[2])
+                      .append(ctrl.array[1]).append(ctrl.array[0]);
+            _packarray.append('\x0').append('\x0').append('\x0').append('\x0');
+            _packarray.append('\x0').append('\x0').append('\x0').append('\x0');
+            _packarray.append(_pack.errorByte).append(_pack.emptyByte);
+            break;
+        case 0x80:
+            _packarray.append((char)SensorType::HyacinthType);
+            break;
+        default:
+            break;
+        }
+        break; }
         case VibroType: {
             // формируем заголовок пакета:
             _packarray.append(_pack.dstByte)
@@ -116,11 +133,20 @@ bool AvroraSensor::makeAnswer(tSensorType type)
                 .append(AvroraConst::SCT)
                 .append(_pack.cmdByte);
             // формируем поле данных
-            _packarray.append(_pack.errorByte)
-                    .append(_pack.statusByte);
-            for(int i = 0; i < 3; ++i)
-                _packarray.append(_pack.chnl[i].array[3]).append(_pack.chnl[i].array[2])
-                .append(_pack.chnl[i].array[1]).append(_pack.chnl[i].array[0]);
+            switch (_pack.cmdByte) {
+            case 0x01:
+                _packarray.append(_pack.errorByte).append(_pack.statusByte);
+                for(int i = 0; i < 3; ++i) {
+                    _packarray.append(_pack.chnl[i].array[3]).append(_pack.chnl[i].array[2])
+                              .append(_pack.chnl[i].array[1]).append(_pack.chnl[i].array[0]);
+                }
+                break;
+            case 0x80:
+                _packarray.append((char)SensorType::VibroType);
+                break;
+            default:
+                break;
+            }
             break; }
         case KRUType: {
             // формируем заголовок пакета:
@@ -129,10 +155,31 @@ bool AvroraSensor::makeAnswer(tSensorType type)
                 .append(AvroraConst::SCT)
                 .append(_pack.cmdByte);
             // формируем поле данных
-            _packarray.append(_pack.errorByte);
-            _packarray.append(_pack.chnl[0].array[3]).append(_pack.chnl[0].array[2])
-                      .append(_pack.chnl[0].array[1]).append(_pack.chnl[0].array[0]);
+            switch (_pack.cmdByte) {
+            case 0x01:
+                _packarray.append(_pack.errorByte);
+                _packarray.append(_pack.chnl[0].array[3]).append(_pack.chnl[0].array[2])
+                          .append(_pack.chnl[0].array[1]).append(_pack.chnl[0].array[0]);
+                break;
+            case 0x02:
+                _packarray.append(_pack.errorByte);
+                AvroraChannel ctrl;
+                ctrl.fdata = (_pack.errorByte) ? (_pack.chnl[0].fdata) : (_pack.chnl[0].fdata / 2.0);
+                _packarray.append(ctrl.array[3]).append(ctrl.array[2])
+                          .append(ctrl.array[1]).append(ctrl.array[0]);
+                break;
+            case 0x03:
+                _packarray.append(_pack.errorByte);
+                _packarray.append(_pack.chnl[0].array[3]).append(_pack.chnl[0].array[2])
+                          .append(_pack.chnl[0].array[1]).append(_pack.chnl[0].array[0]);
+                _packarray.append(_pack.chnl[1].array[3]).append(_pack.chnl[1].array[2])
+                          .append(_pack.chnl[1].array[1]).append(_pack.chnl[1].array[0]);
+                break;
+            default:
+                break;
+            }
             break; }
+        case KorallType:
         case KorallPlusType: {
             // формируем заголовок пакета:
             _packarray.append(_pack.dstByte)
@@ -140,20 +187,43 @@ bool AvroraSensor::makeAnswer(tSensorType type)
                 .append(AvroraConst::SCT)
                 .append(_pack.cmdByte);
             // формируем поле данных
-            if(_pack.cmdByte < koralCmdConst::MeasureDensity){
-                for(int i = 0; i < 2; ++i)
+            switch (_pack.cmdByte) {
+            case 0x01:
+            case 0x02:
+            case 0x03:
+            case 0x04:
+                for(int i = 0; i < 2; ++i) {
                     _packarray.append(_pack.chnl[i].array[3]).append(_pack.chnl[i].array[2])
-                    .append(_pack.chnl[i].array[1]).append(_pack.chnl[i].array[0]);
+                              .append(_pack.chnl[i].array[1]).append(_pack.chnl[i].array[0]);
+                }
                 _packarray.append('\x0').append('\x0').append('\x0').append('\x0');
-            }
-            else if((_pack.cmdByte >= koralCmdConst::MeasureDensity) && (_pack.cmdByte <= koralCmdConst::ClearMassCnt)) {
-                for(int i = 0; i < 6; ++i)
+                _packarray.append(_pack.errorByte).append(_pack.statusByte).append(_pack.emptyByte);
+                break;
+            case 0x05:
+                AvroraChannel ctrl;
+                ctrl.fdata = (_pack.errorByte) ? (_pack.chnl[0].fdata) : (_pack.chnl[0].fdata / 2.0);
+                _packarray.append(ctrl.array[3]).append(ctrl.array[2])
+                          .append(ctrl.array[1]).append(ctrl.array[0]);
+                _packarray.append('\x0').append('\x0').append('\x0').append('\x0');
+                _packarray.append('\x0').append('\x0').append('\x0').append('\x0');
+                _packarray.append(_pack.errorByte).append(_pack.statusByte).append(_pack.emptyByte);
+                break;
+            case 0x06:
+            case 0x07:
+            case 0x08:
+            case 0x09:
+                for(int i = 0; i < 6; ++i) {
                     _packarray.append(_pack.chnl[i].array[3]).append(_pack.chnl[i].array[2])
-                    .append(_pack.chnl[i].array[1]).append(_pack.chnl[i].array[0]);
+                              .append(_pack.chnl[i].array[1]).append(_pack.chnl[i].array[0]);
+                }
+                _packarray.append(_pack.errorByte).append(_pack.statusByte).append(_pack.emptyByte);
+                break;
+            case 0x80:
+                _packarray.append((char)SensorType::KorallType);
+                break;
+            default:
+                break;
             }
-            _packarray.append(_pack.errorByte)
-                    .append(_pack.statusByte)
-                    .append(_pack.emptyByte);
             break; }
         case BKS14Type: {
         // формируем заголовок пакета:

@@ -113,7 +113,7 @@ struct AvroraPack{
     char dstByte;       // адрес источника запроса
     char srcByte;       // адрес расходомера
     char spaceByte;     // байт-разделитель 0x24
-    char cmdByte;       // байт команды
+    quint8 cmdByte;     // байт команды
     AvroraChannel chnl[AvroraConst::maxChnls];  // данные
     char errorByte;     // байт состояния (см. koralErrorConst)
     AvroraChannel errArr;// поле ошибок (только для БКС)
@@ -125,9 +125,10 @@ struct AvroraPack{
     char stopByte;      // стоп-байт транзакции
 };
 
-enum tSensorType
+enum tSensorSettingsType
 {
     KorallType = 0,
+    HyacinthType,
     VibroType,
     KRUType,
     KorallPlusType,
@@ -143,6 +144,15 @@ enum tSensorType
     BKS16Type4,
     NumOfTypes
 };
+
+enum class SensorType
+{
+    KRUType = 1,
+    HyacinthType = 2,
+    KorallType = 3,
+    VibroType = 4,
+};
+
 
 enum class ERR_CODE
 {
@@ -218,7 +228,7 @@ public:
 
     void clear();                           // очистка данных packCMD, pack
     bool updateCMDPack(QByteArray);         // преобразует QByteArray в AvroraPackCMD, выдаёт true, если успешно
-    bool makeAnswer(tSensorType type);           // формирует AvroraPack, выдаёт true, если успешно
+    bool makeAnswer(tSensorSettingsType type);           // формирует AvroraPack, выдаёт true, если успешно
 
     static void combineAnswer(QByteArray & pck);    // дописывает контрольную сумму, байты начала, конца (+ возможный дубляж)
     static uint16_t crc16(QByteArray arr, int start, int end);

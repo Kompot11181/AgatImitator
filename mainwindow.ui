@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>930</width>
+    <width>1024</width>
     <height>550</height>
    </rect>
   </property>
@@ -264,7 +264,7 @@
          <string>АГАТ-КИП</string>
         </property>
         <property name="statusTip">
-         <string>АО Моринформсистема Агат-КИП г.Рязань, Карпунькин Я., 2020 г.</string>
+         <string>АО Моринформсистема Агат-КИП г.Рязань, Карпунькин Я., 2021 г.</string>
         </property>
         <property name="text">
          <string>Агат-КИП</string>
@@ -338,7 +338,7 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>874</width>
+                <width>968</width>
                 <height>189</height>
                </rect>
               </property>
@@ -783,7 +783,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>930</width>
+     <width>1024</width>
      <height>21</height>
     </rect>
    </property>
